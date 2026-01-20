@@ -1,0 +1,51 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [ "develop", "main" ]
+  push:
+    branches: [ "develop" ]
+
+jobs:
+  # T01: BACKEND
+  backend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.14"
+      
+      - name: Install Dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest black
+      
+      - name: Check Formatting (Black)
+        run: cd backend && black --check .
+      
+      - name: Run Tests
+        run: cd backend && pytest
+
+  # T02: FRONTEND
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.21
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install Dependencies
+        run: cd frontend && npm ci
+      
+      - name: Linting
+        run: cd frontend && npm run lint
+      
+      - name: Build Test
+        run: cd frontend && npm run build

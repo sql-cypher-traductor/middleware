@@ -1,0 +1,16 @@
+# --- IDEs ---
+.vscode/
+
+# -- Python --
+__pycache__/
+
+# --- Entornos Virtuales ---
+venv/
+env/
+ENV/
+.env
+.venv
+
+# Alembic (Migraciones) ---
+alembic/__pycache__/
+alembic/versions/__pycache__/
