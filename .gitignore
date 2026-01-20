@@ -1,8 +1,10 @@
-# --- IDEs ---
+# --- IDEs y otros archivos---
 .vscode/
+.DS_Store
 
 # -- Python --
 __pycache__/
+*.pyc
 
 # --- Entornos Virtuales ---
 venv/
@@ -14,3 +16,13 @@ ENV/
 # Alembic (Migraciones) ---
 alembic/__pycache__/
 alembic/versions/__pycache__/
+
+# --- Docker ---
+postgres_data/
+
+# --- Frontend ---
+node_modules/
+.next/
+dist/
+build/
+coverage/
