@@ -23,13 +23,13 @@
 **Objetivo:** Lograr que el sistema traduzca texto SQL a texto Cypher (sin interfaz gráfica compleja aún).
 
 ### Backend (Python):
-- [ ] Crear el servicio ```TranslatorService``` con ```sqlglot```.
-- [ ] Implementar traducción de cláusulas básicas: ```SELECT```, ```FROM```, ```WHERE```.
+- [x] Crear el servicio ```TranslatorService``` con ```sqlglot```.
+- [x] Implementar traducción de cláusulas básicas: ```SELECT```, ```FROM```, ```WHERE```.
 - [ ] Implementar traducción de relaciones: ```JOIN``` $\rightarrow$ ```MATCH```.
 - [ ] Manejo de errores de parsing (Sintaxis SQL inválida).
 
 ### API:
-- [ ] Endpoint POST /api/translate: Recibe string SQL, devuelve string Cypher.
+- [x] Endpoint POST /api/translate: Recibe string SQL, devuelve string Cypher.
 
 **Entregable:** Una API funcional que puedes probar con Postman/Swagger. Le envías un SQL y te responde con Cypher válido.
 
