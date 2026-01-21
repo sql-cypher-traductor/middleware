@@ -25,8 +25,8 @@
 ### Backend (Python):
 - [x] Crear el servicio ```TranslatorService``` con ```sqlglot```.
 - [x] Implementar traducción de cláusulas básicas: ```SELECT```, ```FROM```, ```WHERE```.
-- [ ] Implementar traducción de relaciones: ```JOIN``` $\rightarrow$ ```MATCH```.
-- [ ] Manejo de errores de parsing (Sintaxis SQL inválida).
+- [x] Implementar traducción de relaciones: ```JOIN``` $\rightarrow$ ```MATCH```.
+- [x] Manejo de errores de parsing (Sintaxis SQL inválida).
 
 ### API:
 - [x] Endpoint POST /api/translate: Recibe string SQL, devuelve string Cypher.
@@ -39,7 +39,7 @@
 **Objetivo:** Que cada usuario tenga su espacio seguro y pueda guardar sus conexiones.
 
 ### Backend (Seguridad):
-- [ ] Implementar Modelos de BD (User, DBConnection) en PostgreSQL con SQLAlchemy.
+- [x] Implementar Modelos de BD (User, DBConnection) en PostgreSQL con SQLAlchemy.
 - [ ] Sistema de Auth (JWT): Login, Registro, Recuperar Contraseña.
 - [ ] Cifrado: Implementar servicio para encriptar/desencriptar contraseñas de conexiones (AES-256).
 
