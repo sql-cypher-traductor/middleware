@@ -4,16 +4,16 @@
 **Objetivo:** Tener el entorno listo para codificar de forma fluida y sin bloqueos técnicos.
 
 ### Arquitectura & Configuración:
-- [ ] Inicializar el Monorepo (Git).
-- [ ] Configurar Docker Compose: Orquestar FastAPI (Backend), Next.js (Frontend) y PostgreSQL (DB Sistema).
-- [ ] Configurar Linter/Formatter (ESLint, Prettier, Black, Ruff) para mantener el código limpio automáticamente.
+- [x] Inicializar el Monorepo (Git).
+- [x] Configurar Docker Compose: Orquestar FastAPI (Backend), Next.js (Frontend) y PostgreSQL (DB Sistema).
+- [x] Configurar Linter/Formatter (ESLint, Prettier, Black, Ruff) para mantener el código limpio automáticamente.
 
 ### UI/UX (Prototipado):
 - [ ] Diseñar en baja fidelidad (Wireframe) la pantalla del "Traductor IDE" (3 paneles).
 - [ ] Definir la paleta de colores y componentes base en Shadcn/UI dentro de Next.js.
 
 ### Investigación (Spike):
-- [ ] Prueba de concepto pequeña con sqlglot: Script simple de Python que traduzca un SELECT básico a Cypher.
+- [x] Prueba de concepto pequeña con sqlglot: Script simple de Python que traduzca un SELECT básico a Cypher.
 
 **Entregable:** Un repositorio que levanta con docker-compose up mostrando un "Hola Mundo" en Next.js conectado a la API de FastAPI.
 
