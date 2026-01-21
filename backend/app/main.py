@@ -22,10 +22,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# Agregar enrutadores
 app.include_router(router, prefix="/api", tags=["Traductor"])
 
 
 @app.get("/")
 def read_root():
-    return {"status": "ok", "message": "Backend operativo", "service": "Translator API"}
+    return {
+        "status": "ok",
+        "message": "Middleware operativo",
+        "service": "API Traductor SQL a Cypher",
+    }
