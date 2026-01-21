@@ -29,9 +29,19 @@ class SelectHandler(BaseHandler):
             raise TranslationError("SELECT requiere una cláusula FROM.")
 
         # Obtención de la tabla principal
-        main_table_exp = from_node.expressions[0]
+        main_table_exp = None
+        if from_node.expressions:
+            main_table_exp = from_node.expressions[0]
+        elif from_node.this:
+            main_table_exp = from_node.this
+
+        if not main_table_exp:
+            raise TranslationError("No se pudo detectar la tabla en la cláusula FROM.")
+
         main_table = self.get_table_name(main_table_exp)
-        main_alias = main_table_exp.alias or "n"
+        alias_candidate = getattr(main_table_exp, "alias", None)
+        main_alias = alias_candidate or "n"
+
         if main_alias == main_table:
             main_alias = "n"
 
@@ -42,7 +52,12 @@ class SelectHandler(BaseHandler):
             kind = join.kind or "INNER"
             target_exp = join.this
             target_name = self.get_table_name(target_exp)
-            target_alias = target_exp.alias or target_name[0]
+
+            # Verificar alias de destino. Si no existe, se usa la primera letra o el nombre de la tabla
+            target_alias_candidate = getattr(target_exp, "alias", None)
+            target_alias = target_alias_candidate or (
+                target_name[0] if target_name else "t"
+            )
 
             rel_name = f"RELATED_TO_{target_name.upper()}"
 
@@ -58,19 +73,24 @@ class SelectHandler(BaseHandler):
     def _build_return(expression: exp.Select) -> str:
         # Construcción de la estructura de RETURN en Cypher.
         projections = []
-        distinct_kw = "DISTINCT " if expression.distinct else ""
+        distinct_arg = expression.args.get("distinct")
+        distinct_kw = "DISTINCT " if distinct_arg else ""
 
         for projection in expression.expressions:
             if isinstance(projection, exp.Star):
                 projections.append("n")
             else:
                 alias_part = f" AS {projection.alias}" if projection.alias else ""
-                col_str = (
-                    projection.this.sql() if projection.alias else projection.sql()
-                )
+                col_node = projection.this if projection.alias else projection
+                col_str = col_node.sql()
 
                 # Heurística simple para prefijo
-                if "." not in col_str and "(" not in col_str:
+                if (
+                    "." not in col_str
+                    and "(" not in col_str
+                    and not col_str.isdigit()
+                    and not col_str.startswith("'")
+                ):
                     col_str = f"n.{col_str}"
 
                 projections.append(f"{col_str}{alias_part}")
@@ -85,7 +105,7 @@ class SelectHandler(BaseHandler):
 
     @staticmethod
     def _build_limit(expression: exp.Select) -> str:
-        # Soporte para las palabras reservadas LIMIT y TOP
+        # Soporte para las palabras reservadas LIMIT
         if expression.args.get("limit"):
             return f"LIMIT {expression.args['limit'].expression.sql()}"
         return ""
