@@ -42,9 +42,7 @@ def poc_translate_query(test_name, sql_query):
 
         # PASO 3: GENERACIÓN DE CYPHER
         # Estructura base: MATCH (n:Tabla) [WHERE...] RETURN ...
-        cypher_query = (
-            f"MATCH (n:{main_table}) {filter_str} RETURN {return_str}"
-        )
+        cypher_query = f"MATCH (n:{main_table}) {filter_str} RETURN {return_str}"
 
         print(f"🔸 Resultado Cypher (Generado por nosotros): \n{cypher_query}")
 
