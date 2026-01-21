@@ -14,7 +14,7 @@ class TranslationRequest(BaseModel):
     """
 
     sql_query: str = Field(
-        ..., description="Consulta SQL a traducir", examples="SELECT * FROM users;"
+        ..., description="Consulta SQL a traducir", examples=["SELECT * FROM users;"]
     )
     source_db_type: str = Field(
         default="tsql", description="Dialectos SQL (tsql, postgres, oracle)"
