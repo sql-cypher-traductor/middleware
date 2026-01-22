@@ -23,9 +23,9 @@ app.add_middleware(
 )
 
 # Agregar enrutadores
-app.include_router(auth.router, prefix="/api", tags=["Autenticación"])
-app.include_router(connections.router, prefix="/api", tags=["Conexiones a BD"])
-app.include_router(translator.router, prefix="/api", tags=["Traductor"])
+app.include_router(auth.router, prefix="/api")
+app.include_router(connections.router, prefix="/api")
+app.include_router(translator.router, prefix="/api")
 
 
 @app.get("/")

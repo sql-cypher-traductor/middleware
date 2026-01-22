@@ -39,6 +39,16 @@ class ConnectionCreateDTO(ConnectionDTO):
     password: str
 
 
+class ConnectionUpdateDTO(BaseModel):
+    alias: Optional[str] = None
+    engine: Optional[str] = None
+    host: Optional[str] = None
+    port: Optional[str] = None
+    username: Optional[str] = None
+    db_name: Optional[str] = None
+    password: Optional[str] = None
+
+
 class ConnectionResponseDTO(ConnectionDTO):
     """
     DTO que devuelve una conexión.

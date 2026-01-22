@@ -1,14 +1,28 @@
+# FastAPI
 fastapi
 uvicorn[standard]
+
+# Bases de datos y ORM
 sqlalchemy
 alembic
 psycopg2-binary
 asyncpg
+
+# Parseo
 sqlglot
+
+# Utilidades
 python-dotenv
 python-multipart
 pydantic-settings
 pydantic[email]
-passlib[bcrypt]
+
+# Seguridad
+bcrypt
 python-jose[cryptography]
 cryptography
+
+# Conectores de bases de datos
+neo4j
+pymssql
+# pyodbc

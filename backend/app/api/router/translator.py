@@ -1,13 +1,15 @@
+from glob import translate
+
 from fastapi import APIRouter, HTTPException
 from ...dto import TranslationRequestDTO, TranslationResponseDTO
 from ...services.translation.core import SQLToCypherTranslator
 from ...services.translation.exceptions import TranslationError
 
-router = APIRouter()
+router = APIRouter(prefix="/translate", tags=["Traducción"])
 translator = SQLToCypherTranslator()
 
 
-@router.post("/translate", response_model=TranslationResponseDTO)
+@router.post("", response_model=TranslationResponseDTO)
 async def translate_sql(request: TranslationRequestDTO):
     """
     Convierte consultas SQL a Cypher.

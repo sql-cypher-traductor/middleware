@@ -40,8 +40,8 @@
 
 ### Backend (Seguridad):
 - [x] Implementar Modelos de BD (User, DBConnection) en PostgreSQL con SQLAlchemy.
-- [ ] Sistema de Auth (JWT): Login, Registro, Recuperar Contraseña.
-- [ ] Cifrado: Implementar servicio para encriptar/desencriptar contraseñas de conexiones (AES-256).
+- [x] Sistema de Auth (JWT): Login, Registro, Recuperar Contraseña.
+- [x] Cifrado: Implementar servicio para encriptar/desencriptar contraseñas de conexiones (AES-256).
 
 ### Frontend (Next.js):
 - [ ] Páginas de Login y Registro.
