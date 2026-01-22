@@ -21,7 +21,7 @@ class TranslationRequestDTO(BaseModel):
     )
 
 
-class TranslationResponse(BaseModel):
+class TranslationResponseDTO(BaseModel):
     """
     DTO de respuesta de traducción.
 

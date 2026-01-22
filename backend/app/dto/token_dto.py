@@ -18,7 +18,7 @@ class TokenDTO(BaseModel):
     token_type: str
 
 
-class TokenData(BaseModel):
+class TokenDataDTO(BaseModel):
     """
     DTO para la generación de un token JWT para restablecer contraseña.
 
