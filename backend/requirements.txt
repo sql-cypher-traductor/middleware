@@ -6,7 +6,9 @@ psycopg2-binary
 asyncpg
 sqlglot
 python-dotenv
+python-multipart
 pydantic-settings
+pydantic[email]
 passlib[bcrypt]
 python-jose[cryptography]
 cryptography
