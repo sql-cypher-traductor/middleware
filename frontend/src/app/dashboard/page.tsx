@@ -118,7 +118,7 @@ export default function DashboardPage() {
               <Database className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-500 to-cyan-500">
-              S2C Translator
+              SQL2Graph
             </h1>
           </div>
 

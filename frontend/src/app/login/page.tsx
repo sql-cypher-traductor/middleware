@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import api from "@/lib/api";
 
 const loginSchema = z.object({
   email: z.email("Email inválido"),
@@ -37,21 +38,23 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
     try {
-      // PREPARACIÓN PARA TU BACKEND (FastAPI OAuth2)
+      // Validación de credenciales con OAuth2
       const formData = new URLSearchParams();
       formData.append("username", values.email);
       formData.append("password", values.password);
 
-      // const res = await fetch("http://localhost:8000/api/v1/auth/login", { ... })
+      // Llamada al endpoint para iniciar sesión
+      const { data } = await api.post("/auth/login", formData);
 
-      // Simulación
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Almacenamiento de token en local storage
+      localStorage.setItem("token", data.access_token);
 
-      // localStorage.setItem("token", data.access_token);
       toast.success("Bienvenido de nuevo");
       router.push("/dashboard");
-    } catch (error) {
-      toast.error("Credenciales inválidas");
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.response?.data?.detail || "Credenciales inválidas";
+      toast.error("Error de acceso", { description: msg });
     } finally {
       setIsLoading(false);
     }

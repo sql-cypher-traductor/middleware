@@ -16,8 +16,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2 } from "lucide-react"; // Icono de carga
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import api from "@/lib/api";
 
 const registerSchema = z
   .object({
@@ -48,20 +49,20 @@ export default function RegisterPage() {
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setIsLoading(true);
     try {
-      // AQUÍ IRÁ TU FETCH AL BACKEND
-      // const res = await fetch(...)
-
-      // Simulación de éxito
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Llamada al endpoint de registro
+      await api.post("/auth/register", {
+        email: values.email,
+        password: values.password,
+        full_name: values.fullName,
+      });
 
       toast.success("¡Cuenta creada!", {
         description: "Ya puedes iniciar sesión.",
       });
       router.push("/login");
-    } catch (error) {
-      toast.error("Error al registrarse", {
-        description: "Inténtalo de nuevo.",
-      });
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || "Error al registrarse";
+      toast.error("Error", { description: msg });
     } finally {
       setIsLoading(false);
     }
