@@ -1,14 +1,20 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from dotenv import load_dotenv
 from jose import jwt
 import bcrypt
 from cryptography.fernet import Fernet
 import os
 
+load_dotenv()
+
 # ==================== 1. AUTENTICACIÓN (JWT) ====================
-JWT_SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY", "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-)
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    raise RuntimeError(
+        "JWT_SECRET_KEY environment variable is not set; refusing to start without a secure signing key."
+    )
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 día
 
@@ -48,9 +54,13 @@ def get_password_hash(password):
 
 
 # ==================== 3. CONEXIÓN A BASES DE DATOS (AES-128) ====================
-ENCRYPTION_KEY = os.getenv(
-    "ENCRYPTION_KEY", "bZ1Xz7Q5w8o_gK9y2e4r3t1y6u8i0oP_lKjhHgFdSsA="
-)
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
+if not ENCRYPTION_KEY:
+    raise RuntimeError(
+        "La variable de entorno ENCRYPTION_KEY no ha sido asignada. "
+        "Por favor, configure una clave Fernet segura para encriptar credenciales e bases de datos."
+    )
+
 cipher_suite = Fernet(ENCRYPTION_KEY)
 
 
