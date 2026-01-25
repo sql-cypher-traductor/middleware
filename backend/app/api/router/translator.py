@@ -1,5 +1,3 @@
-from glob import translate
-
 from fastapi import APIRouter, HTTPException
 from ...dto import TranslationRequestDTO, TranslationResponseDTO
 from ...services.translation.core import SQLToCypherTranslator

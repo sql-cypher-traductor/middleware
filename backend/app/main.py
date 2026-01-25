@@ -1,10 +1,10 @@
-from dotenv import load_dotenv
-load_dotenv()
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api.router import auth, connections, translator
 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(
     title="Middleware traductor SQL a Cypher",

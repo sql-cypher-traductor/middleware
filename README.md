@@ -44,9 +44,9 @@
 - [x] Cifrado: Implementar servicio para encriptar/desencriptar contraseñas de conexiones (AES-256).
 
 ### Frontend (Next.js):
-- [ ] Páginas de Login y Registro.
-- [ ] Modal de "Gestión de Conexiones" (CRUD de credenciales).
-- [ ] Botón "Test Connection" (conectar API con drivers reales de SQL/Neo4j).
+- [x] Páginas de Login y Registro.
+- [x] Modal de "Gestión de Conexiones" (CRUD de credenciales).
+- [x] Botón "Test Connection" (conectar API con drivers reales de SQL/Neo4j).
 
 **Entregable:** Sistema de Login funcional y capacidad de guardar una conexión a Neo4j/SQL Server de forma encriptada.
 
