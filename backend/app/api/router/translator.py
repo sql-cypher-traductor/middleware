@@ -5,7 +5,7 @@ from ...dto import TranslationRequestDTO, TranslationResponseDTO
 from ...services.translation.core import SQLToCypherTranslator
 from ...services.translation.exceptions import TranslationError
 
-router = APIRouter(prefix="/translate", tags=["Traducción"])
+router = APIRouter(tags=["Traducción"])
 translator = SQLToCypherTranslator()
 
 

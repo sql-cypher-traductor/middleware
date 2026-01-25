@@ -8,7 +8,7 @@ from ...api import deps
 from ...dto import ConnectionCreateDTO, ConnectionResponseDTO, ConnectionUpdateDTO
 from ...models import User, DbConnection
 
-router = APIRouter(prefix="/connections", tags=["Conexiones a BD"])
+router = APIRouter(tags=["Conexiones a BD"])
 
 
 @router.post("", response_model=ConnectionResponseDTO)

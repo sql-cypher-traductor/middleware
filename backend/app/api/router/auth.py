@@ -5,7 +5,7 @@ from ...core import security, database
 from ...dto import UserResponseDTO, UserCreateDTO, TokenDTO
 from ...models import User
 
-router = APIRouter(prefix="/auth", tags=["Autenticación"])
+router = APIRouter(tags=["Autenticación"])
 
 
 @router.post("/register", response_model=UserResponseDTO)
