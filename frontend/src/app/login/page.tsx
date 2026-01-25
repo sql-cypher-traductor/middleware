@@ -70,7 +70,7 @@ export default function LoginPage() {
           "Continúa optimizando tus consultas y gestionando tus bases de datos desde un solo lugar.",
         ctaText: "¿No tienes cuenta?",
         ctaLink: "/register",
-        ctaLabel: "Regístrate gratis",
+        ctaLabel: "Regístrate",
       }}
     >
       <Form {...form}>
@@ -95,12 +95,12 @@ export default function LoginPage() {
               <FormItem>
                 <div className="flex items-center justify-between">
                   <FormLabel>Contraseña</FormLabel>
-                  <Link
+                  {/*<Link
                     href="/forgot-password"
                     className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline"
                   >
                     ¿Olvidaste tu contraseña?
-                  </Link>
+                  </Link>*/}
                 </div>
                 <FormControl>
                   <Input type="password" placeholder="••••••" {...field} />

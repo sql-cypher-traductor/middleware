@@ -70,10 +70,10 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Crear cuenta"
+      title="Registrarse"
       subtitle="Empieza a traducir SQL a Grafos hoy mismo."
       sideContent={{
-        title: "Únete a la revolución Graph",
+        title: "Comienza ahora",
         description:
           "Transforma estructuras relacionales rígidas en grafos flexibles. Diseñado para arquitectos de datos modernos.",
         ctaText: "¿Ya tienes cuenta?",
@@ -128,7 +128,7 @@ export default function RegisterPage() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirmar</FormLabel>
+                  <FormLabel>Confirmar Contraseña</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••" {...field} />
                   </FormControl>
