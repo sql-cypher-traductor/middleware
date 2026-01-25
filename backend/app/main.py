@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.routes import router
+from .api.router import auth, connections, translator
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(
     title="Middleware traductor SQL a Cypher",
@@ -23,7 +27,9 @@ app.add_middleware(
 )
 
 # Agregar enrutadores
-app.include_router(router, prefix="/api", tags=["Traductor"])
+app.include_router(auth.router, prefix="/api/auth")
+app.include_router(connections.router, prefix="/api/connections")
+app.include_router(translator.router, prefix="/api/translate")
 
 
 @app.get("/")

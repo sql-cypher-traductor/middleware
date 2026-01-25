@@ -25,8 +25,8 @@
 ### Backend (Python):
 - [x] Crear el servicio ```TranslatorService``` con ```sqlglot```.
 - [x] Implementar traducción de cláusulas básicas: ```SELECT```, ```FROM```, ```WHERE```.
-- [ ] Implementar traducción de relaciones: ```JOIN``` $\rightarrow$ ```MATCH```.
-- [ ] Manejo de errores de parsing (Sintaxis SQL inválida).
+- [x] Implementar traducción de relaciones: ```JOIN``` $\rightarrow$ ```MATCH```.
+- [x] Manejo de errores de parsing (Sintaxis SQL inválida).
 
 ### API:
 - [x] Endpoint POST /api/translate: Recibe string SQL, devuelve string Cypher.
@@ -39,14 +39,14 @@
 **Objetivo:** Que cada usuario tenga su espacio seguro y pueda guardar sus conexiones.
 
 ### Backend (Seguridad):
-- [ ] Implementar Modelos de BD (User, DBConnection) en PostgreSQL con SQLAlchemy.
-- [ ] Sistema de Auth (JWT): Login, Registro, Recuperar Contraseña.
-- [ ] Cifrado: Implementar servicio para encriptar/desencriptar contraseñas de conexiones (AES-256).
+- [x] Implementar Modelos de BD (User, DBConnection) en PostgreSQL con SQLAlchemy.
+- [x] Sistema de Auth (JWT): Login, Registro, Recuperar Contraseña.
+- [x] Cifrado: Implementar servicio para encriptar/desencriptar contraseñas de conexiones (AES-128).
 
 ### Frontend (Next.js):
-- [ ] Páginas de Login y Registro.
-- [ ] Modal de "Gestión de Conexiones" (CRUD de credenciales).
-- [ ] Botón "Test Connection" (conectar API con drivers reales de SQL/Neo4j).
+- [x] Páginas de Login y Registro.
+- [x] Modal de "Gestión de Conexiones" (CRUD de credenciales).
+- [x] Botón "Test Connection" (conectar API con drivers reales de SQL/Neo4j).
 
 **Entregable:** Sistema de Login funcional y capacidad de guardar una conexión a Neo4j/SQL Server de forma encriptada.
 

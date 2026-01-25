@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException
-from ..schemas.translation_schema import TranslationRequest, TranslationResponse
-from ..services.translation.core import SQLToCypherTranslator
-from ..services.translation.exceptions import TranslationError
+from ...dto import TranslationRequestDTO, TranslationResponseDTO
+from ...services.translation.core import SQLToCypherTranslator
+from ...services.translation.exceptions import TranslationError
 
-router = APIRouter()
+router = APIRouter(tags=["Traducción"])
 translator = SQLToCypherTranslator()
 
 
-@router.post("/translate", response_model=TranslationResponse)
-async def translate_sql(request: TranslationRequest):
+@router.post("", response_model=TranslationResponseDTO)
+async def translate_sql(request: TranslationRequestDTO):
     """
     Convierte consultas SQL a Cypher.
     Soporta las operaciones CRUD.
@@ -16,7 +16,7 @@ async def translate_sql(request: TranslationRequest):
     try:
         cypher = translator.translate(request.sql_query, dialect=request.source_db_type)
 
-        return TranslationResponse(
+        return TranslationResponseDTO(
             sql_query=request.sql_query,
             cypher_query=cypher,
             metadata={"dialect": request.source_db_type, "status": "success"},
@@ -24,7 +24,7 @@ async def translate_sql(request: TranslationRequest):
 
     except TranslationError as e:
         # Errores de validación
-        return TranslationResponse(
+        return TranslationResponseDTO(
             sql_query=request.sql_query,
             error=str(e),
             cypher_query=None,
