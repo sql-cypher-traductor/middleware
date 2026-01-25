@@ -40,16 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConnectionModal } from "@/components/dashboard/connection-modal";
-
-interface DbConnection {
-  id: string;
-  alias: string;
-  engine: string;
-  host: string;
-  username: string;
-  port: string;
-  db_name: string;
-}
+import { DbConnection } from "@/types/db-connection";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -59,17 +50,15 @@ export default function DashboardPage() {
   const [selectedConn, setSelectedConn] = useState<DbConnection | undefined>(
     undefined,
   );
-  const [userName, setUserName] = useState("Usuario"); // Estado para el nombre
+  const [userName] = useState("Usuario"); // Estado para el nombre
 
-  // Cargar conexiones y datos de usuario (si el backend lo devuelve)
+  // Cargar conexiones y datos de usuario
   const fetchConnections = async () => {
     try {
       const res = await api.get("/connections");
       setConnections(res.data);
-      // Aquí podrías decodificar el token para sacar el nombre real, por ahora placeholder
     } catch (error) {
       console.error("Error fetching connections:", error);
-      // No mostramos toast de error si es solo que no hay auth, el interceptor o useEffect maneja redirect
     } finally {
       setLoading(false);
     }
@@ -90,7 +79,6 @@ export default function DashboardPage() {
   };
 
   const handleDelete = async (id: string) => {
-    // Usar un toast con promesa es más elegante
     toast.promise(api.delete(`/connections/${id}`), {
       loading: "Eliminando...",
       success: () => {

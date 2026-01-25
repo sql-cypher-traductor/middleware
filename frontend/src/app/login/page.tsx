@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import Link from "next/link";
 import { AuthLayout } from "@/components/auth-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +19,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import api from "@/lib/api";
+import { AxiosError} from "axios";
 
 const loginSchema = z.object({
   email: z.email("Email inválido"),
@@ -51,10 +51,11 @@ export default function LoginPage() {
 
       toast.success("Bienvenido de nuevo");
       router.push("/dashboard");
-    } catch (error: any) {
-      console.error(error);
-      const msg = error.response?.data?.detail || "Credenciales inválidas";
-      toast.error("Error de acceso", { description: msg });
+    } catch (err) {
+        const error = err as AxiosError<{detail: string}>;
+        console.error(error);
+        const msg = error.response?.data?.detail || "Credenciales inválidas";
+        toast.error("Error de acceso", { description: msg });
     } finally {
       setIsLoading(false);
     }
