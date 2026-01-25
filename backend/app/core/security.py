@@ -14,7 +14,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 día
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Genera un token JWT firmado con HS256."""
+    """Genera un token JWT para autenticación."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now() + expires_delta
