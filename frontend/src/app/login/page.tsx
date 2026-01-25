@@ -19,7 +19,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import api from "@/lib/api";
-import { AxiosError} from "axios";
+import { AxiosError } from "axios";
 
 const loginSchema = z.object({
   email: z.email("Email inválido"),
@@ -52,10 +52,10 @@ export default function LoginPage() {
       toast.success("Bienvenido de nuevo");
       router.push("/dashboard");
     } catch (err) {
-        const error = err as AxiosError<{detail: string}>;
-        console.error(error);
-        const msg = error.response?.data?.detail || "Credenciales inválidas";
-        toast.error("Error de acceso", { description: msg });
+      const error = err as AxiosError<{ detail: string }>;
+      console.error(error);
+      const msg = error.response?.data?.detail || "Credenciales inválidas";
+      toast.error("Error de acceso", { description: msg });
     } finally {
       setIsLoading(false);
     }
