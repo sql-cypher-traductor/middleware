@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { CodeEditor } from "@/components/editor/code-editor";
@@ -13,10 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Play, Loader2, ArrowRightLeft } from "lucide-react";
+import { Play, Loader2, ArrowRightLeft, LayoutDashboard } from "lucide-react";
 import { DbConnection } from "@/types/db-connection";
 
 export default function TranslatorPage() {
+  const router = useRouter();
+
   // Estados
   const [sqlCode, setSqlCode] = useState(
     "-- Escribe tu consulta SQL aquí\nSELECT * FROM usuarios;",
@@ -88,6 +91,15 @@ export default function TranslatorPage() {
         {/* TOOLBAR */}
         <header className="h-16 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-900">
           <div className="flex items-center gap-4">
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push('/dashboard')}
+                title="Volver al Dashboard"
+            >
+              <LayoutDashboard className="h-5 w-5 text-slate-500" />
+            </Button>
+
             <h1 className="font-bold text-lg">Espacio de Trabajo</h1>
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
 
