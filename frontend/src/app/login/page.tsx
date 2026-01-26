@@ -65,12 +65,11 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title="Iniciar Sesión"
-      subtitle="Accede a tus proyectos y conexiones."
+      subtitle=""
       sideContent={{
         title: "Bienvenido de vuelta",
-        description:
-          "Continúa optimizando tus consultas y gestionando tus bases de datos desde un solo lugar.",
-        ctaText: "¿No tienes cuenta?",
+        description: "",
+        ctaText: "¿Aún no tienes una cuenta?",
         ctaLink: "/register",
         ctaLabel: "Regístrate",
       }}
@@ -84,7 +83,7 @@ export default function LoginPage() {
               <FormItem>
                 <FormLabel>Correo Electrónico</FormLabel>
                 <FormControl>
-                  <Input placeholder="nombre@empresa.com" {...field} />
+                  <Input placeholder="user@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

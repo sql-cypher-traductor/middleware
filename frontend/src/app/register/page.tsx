@@ -73,12 +73,11 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Registrarse"
-      subtitle="Empieza a traducir SQL a Grafos hoy mismo."
+      subtitle=""
       sideContent={{
         title: "Comienza ahora",
-        description:
-          "Transforma estructuras relacionales rígidas en grafos flexibles. Diseñado para arquitectos de datos modernos.",
-        ctaText: "¿Ya tienes cuenta?",
+        description: "",
+        ctaText: "¿Tienes una cuenta?",
         ctaLink: "/login",
         ctaLabel: "Iniciar Sesión",
       }}
@@ -92,7 +91,7 @@ export default function RegisterPage() {
               <FormItem>
                 <FormLabel>Nombre Completo</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ej. Ana Lovelace" {...field} />
+                  <Input placeholder="Ingresa tu nombre completo" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -105,7 +104,7 @@ export default function RegisterPage() {
               <FormItem>
                 <FormLabel>Correo Electrónico</FormLabel>
                 <FormControl>
-                  <Input placeholder="nombre@empresa.com" {...field} />
+                  <Input placeholder="user@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
