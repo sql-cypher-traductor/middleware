@@ -24,7 +24,7 @@ def get_admin_stats(
 
     # 3. Tasa de Errores (Traducciones fallidas / Totales)
     failed_translations = (
-        db.query(Translation).filter(Translation.error_message != None).count()
+        db.query(Translation).filter(Translation.error_message is not None).count()
     )
     error_rate = 0
     if total_translations > 0:
