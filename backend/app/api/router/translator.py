@@ -23,8 +23,9 @@ DIALECT_MAP = {
     "postgresql": "postgres",
     "mysql": "mysql",
     "oracle": "oracle",
-    "neo4j": "tsql" 
+    "neo4j": "tsql",
 }
+
 
 @router.post("", response_model=TranslationResponseDTO)
 async def translate_sql(
@@ -46,11 +47,9 @@ async def translate_sql(
     # 2. Traducir consulta SQL a Cypher
     try:
         if request.source_db_type.lower() == "neo4j":
-             pass
+            pass
 
-        cypher_result = translator.translate(
-            request.sql_query, dialect=source_dialect
-        )
+        cypher_result = translator.translate(request.sql_query, dialect=source_dialect)
 
     except TranslationError as e:
         error_message = str(e)
@@ -63,7 +62,7 @@ async def translate_sql(
         history_entry = Translation(
             user_id=current_user.id,
             sql_query=request.sql_query,
-            cypher_query=cypher_result or "", 
+            cypher_query=cypher_result or "",
             error_message=error_message,
         )
         db.add(history_entry)
