@@ -56,12 +56,12 @@
 **Objetivo:** Unir el motor del Sprint 1 con la seguridad del Sprint 2 en una interfaz usable.
 
 ### Frontend (DX):
-- [ ] Implementar Monaco Editor en Next.js (uno para SQL, uno para Cypher - ReadOnly).
-- [ ] Integrar el endpoint de traducción al botón "Traducir".
-- [ ] Panel de Historial de Consultas (Sidebar).
+- [x] Implementar Monaco Editor en Next.js (uno para SQL, uno para Cypher - ReadOnly).
+- [x] Integrar el endpoint de traducción al botón "Traducir".
+- [x] Panel de Historial de Consultas (Sidebar).
 
 ### Backend:
-- [ ] Guardar historial de traducciones por usuario.
+- [x] Guardar historial de traducciones por usuario.
 
 **Entregable:** La "Homepage" funciona. Escribes código en la web, das clic y aparece la traducción.
 
