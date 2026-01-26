@@ -25,4 +25,4 @@ cryptography
 # Conectores de bases de datos
 neo4j
 pymssql
-# pyodbc
+pyodbc

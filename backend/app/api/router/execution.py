@@ -6,7 +6,7 @@ from ...api import deps
 from ...core.security import decrypt_credential
 from ...dto import ExecutionRequestDTO
 from ...models import User, DbConnection
-from ...services.execution.neo4j_service import Neo4jExecutor
+from backend.app.services.neo4j_service import Neo4jExecutor
 
 router = APIRouter(tags=["Ejecución"])
 
