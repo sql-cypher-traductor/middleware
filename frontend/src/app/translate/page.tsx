@@ -6,6 +6,7 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 import { CodeEditor } from "@/components/editor/code-editor";
 import { HistorySidebar } from "@/components/translator/history-sidebar";
+import { SchemaSidebar } from "@/components/translator/schema-sidebar";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -172,6 +173,11 @@ export default function TranslatorPage() {
     }
   };
 
+  const handleSchemaInsert = (text: string) => {
+    setSqlCode((prev) => prev + ` ${text}`);
+    toast.info(`Insertado: ${text}`);
+  };
+
   const renderResultsTable = () => {
     if (!graphData.nodes || graphData.nodes.length === 0) {
       return (
@@ -231,7 +237,7 @@ export default function TranslatorPage() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* SIDEBAR */}
+      {/* Historial */}
       <HistorySidebar
         onSelect={handleHistorySelect}
         refreshTrigger={refreshHistory}
@@ -380,6 +386,12 @@ export default function TranslatorPage() {
           </div>
         </div>
       </div>
+
+      {/* Esquemas Relacionales */}
+      <SchemaSidebar
+        connectionId={selectedConnId}
+        onInsert={handleSchemaInsert}
+      />
     </div>
   );
 }
