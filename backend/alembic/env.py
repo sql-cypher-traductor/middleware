@@ -8,7 +8,8 @@ from alembic import context
 
 # =============== IMPORTACIÓN DE MODELOS ===============
 from app.core.database import Base
-from app import models
+
+# from app import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
