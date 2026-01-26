@@ -39,7 +39,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNav } from "@/components/dashboard/user-nav";
 import { ConnectionModal } from "@/components/dashboard/connection-modal";
 import { DbConnection } from "@/types/db-connection";
 
@@ -126,12 +126,7 @@ export default function DashboardPage() {
               <LogOut className="h-4 w-4 mr-2" />
               Salir
             </Button>
-            <Avatar className="h-9 w-9 border-2 border-indigo-100 dark:border-indigo-900">
-              <AvatarImage
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
-              />
-              <AvatarFallback>US</AvatarFallback>
-            </Avatar>
+            <UserNav />
           </div>
         </div>
       </header>

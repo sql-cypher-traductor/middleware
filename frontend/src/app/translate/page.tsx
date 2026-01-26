@@ -27,6 +27,7 @@ import {
 import { Play, Loader2, ArrowRightLeft, LayoutDashboard } from "lucide-react";
 import { GraphView } from "@/components/visualizer/graph-view";
 import { AxiosError } from "axios";
+import { UserNav } from "@/components/dashboard/user-nav";
 import { DbConnection } from "@/types/db-connection";
 
 interface GraphNode {
@@ -256,6 +257,10 @@ export default function TranslatorPage() {
             >
               <LayoutDashboard className="h-5 w-5 text-slate-500" />
             </Button>
+
+            <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2" /> {/* Separador visual */}
+
+            <UserNav />
 
             <h1 className="font-bold text-lg">Espacio de Trabajo</h1>
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
