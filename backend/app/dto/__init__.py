@@ -9,13 +9,20 @@ from .token_dto import (
     TokenDataDTO,
     PasswordResetRequestDTO,
     PasswordResetConfirmDTO,
+    PasswordChangeDTO,
 )
 from .translation_dto import (
     TranslationRequestDTO,
     TranslationResponseDTO,
     TranslationHistoryResponseDTO,
 )
-from .user_dto import UserDTO, UserCreateDTO, UserResponseDTO
+from .user_dto import (
+    UserDTO,
+    UserCreateDTO,
+    UserResponseDTO,
+    UserUpdateAdminDTO,
+    UserUpdateDTO,
+)
 from .execution_dto import ExecutionRequestDTO, ExportRequestDTO
 
 __all__ = [
@@ -25,6 +32,7 @@ __all__ = [
     "ConnectionResponseDTO",
     "ExecutionRequestDTO",
     "ExportRequestDTO",
+    "PasswordChangeDTO",
     "PasswordResetRequestDTO",
     "PasswordResetConfirmDTO",
     "TokenDTO",
@@ -34,5 +42,7 @@ __all__ = [
     "TranslationHistoryResponseDTO",
     "UserDTO",
     "UserCreateDTO",
+    "UserUpdateDTO",
+    "UserUpdateAdminDTO",
     "UserResponseDTO",
 ]

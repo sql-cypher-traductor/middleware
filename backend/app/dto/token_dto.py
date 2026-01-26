@@ -36,3 +36,8 @@ class PasswordResetRequestDTO(BaseModel):
 class PasswordResetConfirmDTO(BaseModel):
     token: str
     new_password: str
+
+
+class PasswordChangeDTO(BaseModel):
+    current_password: str
+    new_password: str
