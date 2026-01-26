@@ -5,7 +5,11 @@ from .connection_dto import (
     ConnectionUpdateDTO,
 )
 from .token_dto import TokenDTO, TokenDataDTO
-from .translation_dto import TranslationRequestDTO, TranslationResponseDTO
+from .translation_dto import (
+    TranslationRequestDTO,
+    TranslationResponseDTO,
+    TranslationHistoryResponseDTO,
+)
 from .user_dto import UserDTO, UserCreateDTO, UserResponseDTO
 
 __all__ = [
@@ -17,6 +21,7 @@ __all__ = [
     "TokenDataDTO",
     "TranslationResponseDTO",
     "TranslationRequestDTO",
+    "TranslationHistoryResponseDTO",
     "UserDTO",
     "UserCreateDTO",
     "UserResponseDTO",

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -48,3 +50,25 @@ class TranslationResponseDTO(BaseModel):
                 "error": None,
             }
         }
+
+
+class TranslationHistoryResponseDTO(BaseModel):
+    """
+    DTO que devuelve el historial de traducciones.
+
+    Atributos:
+        - id: Identificador único de la traducción.
+        - sql_query: Consulta SQL original.
+        - cypher_query: Consulta Cypher traducida.
+        - error_message: Mensaje de error por fallos en la traducción.
+        - created_at: Fecha y hora de creación de la traducción.
+    """
+
+    id: int
+    sql_query: str
+    cypher_query: str
+    error_message: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
