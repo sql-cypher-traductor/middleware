@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 """DTOs para la generación y validación de tokens JWT."""
 
@@ -27,3 +27,12 @@ class TokenDataDTO(BaseModel):
     """
 
     email: Optional[str] = None
+
+
+class PasswordResetRequestDTO(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmDTO(BaseModel):
+    token: str
+    new_password: str

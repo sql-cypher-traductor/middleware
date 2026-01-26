@@ -4,7 +4,12 @@ from .connection_dto import (
     ConnectionResponseDTO,
     ConnectionUpdateDTO,
 )
-from .token_dto import TokenDTO, TokenDataDTO
+from .token_dto import (
+    TokenDTO,
+    TokenDataDTO,
+    PasswordResetRequestDTO,
+    PasswordResetConfirmDTO,
+)
 from .translation_dto import (
     TranslationRequestDTO,
     TranslationResponseDTO,
@@ -20,6 +25,8 @@ __all__ = [
     "ConnectionResponseDTO",
     "ExecutionRequestDTO",
     "ExportRequestDTO",
+    "PasswordResetRequestDTO",
+    "PasswordResetConfirmDTO",
     "TokenDTO",
     "TokenDataDTO",
     "TranslationResponseDTO",

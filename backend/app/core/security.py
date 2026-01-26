@@ -76,3 +76,32 @@ def decrypt_credential(encrypted_password: str) -> str:
     Desencripta la contraseña para conectarse a la base de datos
     """
     return cipher_suite.decrypt(encrypted_password.encode()).decode()
+
+
+# ==================== 4. RECUPERACIÓN DE CONTRASEÑA ====================
+RESET_TOKEN_EXPIRE_MINUTES = 30
+
+
+def create_password_reset_token(email: str):
+    """Genera un token específico para recuperar contraseña."""
+    delta = timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
+    now = datetime.now()
+    expires = now + delta
+    encoded_jwt = jwt.encode(
+        {"sub": email, "exp": expires, "type": "reset"},
+        JWT_SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+    return encoded_jwt
+
+
+def verify_reset_token(token: str) -> Optional[str]:
+    """Decodifica y valida el token de recuperación."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "reset":
+            return None
+        email: str = payload.get("sub")
+        return email
+    except jwt.JWTError:
+        return None

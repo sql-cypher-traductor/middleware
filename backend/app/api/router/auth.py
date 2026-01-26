@@ -3,8 +3,15 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+
 from ...core import security, database
-from ...dto import UserResponseDTO, UserCreateDTO, TokenDTO
+from ...dto import (
+    UserResponseDTO,
+    UserCreateDTO,
+    TokenDTO,
+    PasswordResetConfirmDTO,
+    PasswordResetRequestDTO,
+)
 from ...models import User
 
 router = APIRouter(tags=["Autenticación"])
@@ -55,3 +62,54 @@ def login(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    request: PasswordResetRequestDTO, db: Session = Depends(database.get_db)
+):
+    """
+    Genera un token de recuperación y simula el envío de correo.
+    """
+    user = db.query(User).filter(User.email == str(request.email)).first()
+    if not user:
+        # Por seguridad, no indicamos si el correo no existe, pero retornamos éxito.
+        return {"message": "Si el correo existe, se enviarán las instrucciones."}
+
+    # 1. Generar token
+    token = security.create_password_reset_token(user.email)
+
+    # 2. Simulación de envío de correo (Imprimir en consola del Backend)
+    # En producción, aquí usarías fastapi-mail o smtplib
+    reset_link = f"http://localhost:3000/reset-password?token={token}"
+
+    print("\n" + "=" * 50)
+    print(f"EMAIL SIMULADO PARA: {user.email}")
+    print(f"LINK DE RECUPERACIÓN: {reset_link}")
+    print("=" * 50 + "\n")
+
+    return {"message": "Si el correo existe, se enviarán las instrucciones."}
+
+
+@router.post("/reset-password")
+def reset_password(
+    data: PasswordResetConfirmDTO, db: Session = Depends(database.get_db)
+):
+    """
+    Restablece la contraseña usando un token válido.
+    """
+    # 1. Verificar token
+    email = security.verify_reset_token(data.token)
+    if not email:
+        raise HTTPException(status_code=400, detail="Token inválido o expirado")
+
+    # 2. Buscar usuario
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # 3. Actualizar contraseña
+    user.hashed_password = security.get_password_hash(data.new_password)
+    db.commit()
+
+    return {"message": "Contraseña actualizada correctamente"}
