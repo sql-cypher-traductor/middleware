@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 interface CodeEditorProps {
   value: string;
   onChange?: (value: string | undefined) => void;
-  language: "sql" | "cypher" | "plaintext";
+  language: "sql" | "cypher" | "plaintext" | "json";
   readOnly?: boolean;
 }
 

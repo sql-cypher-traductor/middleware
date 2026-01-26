@@ -14,7 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Play, Loader2, ArrowRightLeft, LayoutDashboard } from "lucide-react";
+import { GraphView } from "@/components/visualizer/graph-view";
 import { AxiosError } from "axios";
 import { DbConnection } from "@/types/db-connection";
 
@@ -31,7 +33,10 @@ export default function TranslatorPage() {
   const [connections, setConnections] = useState<DbConnection[]>([]);
   const [selectedConnId, setSelectedConnId] = useState<string>("");
   const [isTranslating, setIsTranslating] = useState(false);
-  const [refreshHistory, setRefreshHistory] = useState(0); // Trigger para actualizar sidebar
+  const [refreshHistory, setRefreshHistory] = useState(0);
+  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+  const [activeTab, setActiveTab] = useState("cypher");
+  const [isExecuting, setIsExecuting] = useState(false);
 
   // Cargar conexiones al inicio
   useEffect(() => {
@@ -89,6 +94,57 @@ export default function TranslatorPage() {
   const handleHistorySelect = (sql: string, cypher?: string) => {
     setSqlCode(sql);
     if (cypher) setCypherCode(cypher);
+  };
+
+  const handleExecute = async () => {
+    setIsExecuting(true);
+    try {
+      const res = await api.post("/execute", {
+        connection_id: selectedConnId,
+        cypher_query: cypherCode,
+      });
+      setGraphData(res.data);
+      setActiveTab("graph");
+      toast.success("Consulta ejecutada con éxito");
+    } catch (error) {
+      console.error("Error capturado:", error); // Para depurar en consola
+
+      interface ValidationError {
+        msg: string;
+        loc?: (string | number)[];
+      }
+
+      interface ApiErrorResponse {
+        detail?: string | { reason: string } | ValidationError[];
+      }
+
+      const err = error as AxiosError<ApiErrorResponse>;
+      let msg = "Error desconocido de ejecución";
+
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+
+        // CASO 1: Error 422 de Pydantic (Lista de objetos) -> El que te causó el error
+        if (Array.isArray(detail)) {
+          // Tomamos el primer mensaje de error y le indicamos dónde falló
+          msg = `${detail[0].msg} (Campo: ${detail[0].loc?.join(".")})`;
+        }
+        // CASO 2: Error estructurado { reason: "..." } (Tu formato custom)
+        else if (typeof detail === "object" && detail.reason) {
+          msg = detail.reason;
+        }
+        // CASO 3: String directo (Error 500 simple)
+        else if (typeof detail === "string") {
+          msg = detail;
+        }
+      }
+
+      toast.error("Error de ejecución", {
+        description: msg, // Ahora aseguramos que SIEMPRE es un string
+      });
+    } finally {
+      setIsExecuting(false);
+    }
   };
 
   return (
@@ -164,15 +220,68 @@ export default function TranslatorPage() {
           </div>
 
           {/* CYPHER OUTPUT */}
-          <div className="flex-1 flex flex-col gap-2 min-h-75">
-            <span className="text-sm font-medium text-slate-500 ml-1">
-              Salida Cypher
-            </span>
-            <CodeEditor
-              language="plaintext" // Monaco no tiene 'cypher' nativo por defecto, plaintext sirve por ahora
-              value={cypherCode}
-              readOnly={true}
-            />
+          <div className="flex-1 flex flex-col gap-2 min-h-100">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-500 ml-1">
+                Resultados
+              </span>
+              {/* Botón Mágico */}
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleExecute}
+                disabled={isExecuting || !cypherCode}
+                className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+              >
+                {isExecuting ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                ) : (
+                  <Play className="h-3 w-3 mr-2" />
+                )}
+                Ejecutar en Neo4j
+              </Button>
+            </div>
+
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full h-full flex flex-col"
+            >
+              <TabsList className="w-full justify-start">
+                <TabsTrigger value="cypher">Código Cypher</TabsTrigger>
+                <TabsTrigger value="graph">Grafo Visual</TabsTrigger>
+                <TabsTrigger value="json">JSON</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="cypher" className="flex-1 h-full mt-2">
+                <CodeEditor
+                  language="plaintext"
+                  value={cypherCode}
+                  readOnly={true}
+                />
+              </TabsContent>
+
+              <TabsContent
+                value="graph"
+                className="flex-1 h-full mt-2 border rounded-md min-h-100"
+              >
+                {graphData.nodes.length > 0 ? (
+                  <GraphView data={graphData} />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    Ejecuta una consulta para ver el grafo.
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="json" className="flex-1 h-full mt-2">
+                <CodeEditor
+                  language="json"
+                  value={JSON.stringify(graphData, null, 2)}
+                  readOnly={true}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
