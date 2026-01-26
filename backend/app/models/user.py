@@ -6,6 +6,11 @@ from sqlalchemy.sql import func
 
 from ..core.database import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    pass
+
 
 class User(Base):
     __tablename__ = "users"
@@ -18,3 +23,6 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     connections = relationship("DbConnection", back_populates="owner")
+    translations = relationship(
+        "Translation", back_populates="user", cascade="all, delete-orphan"
+    )
