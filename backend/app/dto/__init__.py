@@ -11,12 +11,14 @@ from .translation_dto import (
     TranslationHistoryResponseDTO,
 )
 from .user_dto import UserDTO, UserCreateDTO, UserResponseDTO
+from .execution_dto import ExecutionRequestDTO
 
 __all__ = [
     "ConnectionDTO",
     "ConnectionCreateDTO",
     "ConnectionUpdateDTO",
     "ConnectionResponseDTO",
+    "ExecutionRequestDTO",
     "TokenDTO",
     "TokenDataDTO",
     "TranslationResponseDTO",

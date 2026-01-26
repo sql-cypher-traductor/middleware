@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.router import auth, connections, translator
+from .api.router import auth, connections, translator, execution
 
 from dotenv import load_dotenv
 
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/auth")
 app.include_router(connections.router, prefix="/api/connections")
 app.include_router(translator.router, prefix="/api/translate")
+app.include_router(execution.router, prefix="/api/execute")
 
 
 @app.get("/")
