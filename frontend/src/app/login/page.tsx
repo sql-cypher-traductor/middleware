@@ -20,6 +20,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import api from "@/lib/api";
 import { AxiosError } from "axios";
+import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.email("Email inválido"),
@@ -96,12 +97,12 @@ export default function LoginPage() {
               <FormItem>
                 <div className="flex items-center justify-between">
                   <FormLabel>Contraseña</FormLabel>
-                  {/*<Link
+                  <Link
                     href="/forgot-password"
                     className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline"
                   >
                     ¿Olvidaste tu contraseña?
-                  </Link>*/}
+                  </Link>
                 </div>
                 <FormControl>
                   <Input type="password" placeholder="••••••" {...field} />
