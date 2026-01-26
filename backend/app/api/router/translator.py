@@ -1,3 +1,4 @@
+#
 from typing import List
 
 from fastapi import APIRouter, HTTPException, Depends, status
@@ -17,6 +18,13 @@ from ...services.translation.exceptions import TranslationError
 router = APIRouter(tags=["Traducción"])
 translator = SQLToCypherTranslator()
 
+DIALECT_MAP = {
+    "sqlserver": "tsql",
+    "postgresql": "postgres",
+    "mysql": "mysql",
+    "oracle": "oracle",
+    "neo4j": "tsql" 
+}
 
 @router.post("", response_model=TranslationResponseDTO)
 async def translate_sql(
@@ -26,18 +34,22 @@ async def translate_sql(
 ):
     """
     Convierte consultas SQL a Cypher.
-    - Si tiene éxito: Retorna 200 OK con la traducción.
-    - Si falla (SQL inválido): Guarda en historial y retorna 422 Unprocessable Entity.
     """
 
     cypher_result = None
     error_message = None
     is_client_error = False
 
-    # Traducir consulta SQL a Cypher
+    # 1. Determinar el dialecto
+    source_dialect = DIALECT_MAP.get(request.source_db_type.lower(), "tsql")
+
+    # 2. Traducir consulta SQL a Cypher
     try:
+        if request.source_db_type.lower() == "neo4j":
+             pass
+
         cypher_result = translator.translate(
-            request.sql_query, dialect=request.source_db_type
+            request.sql_query, dialect=source_dialect
         )
 
     except TranslationError as e:
@@ -46,12 +58,12 @@ async def translate_sql(
     except Exception as e:
         error_message = f"Error crítico interno: {str(e)}"
 
-    # Almacenamiento en la base de datos
+    # 3. Almacenamiento en la base de datos
     try:
         history_entry = Translation(
             user_id=current_user.id,
             sql_query=request.sql_query,
-            cypher_query=cypher_result,
+            cypher_query=cypher_result or "", 
             error_message=error_message,
         )
         db.add(history_entry)
@@ -60,8 +72,7 @@ async def translate_sql(
     except Exception as db_error:
         print(f"Error guardando historial: {db_error}")
 
-    # Manejo de errores y respuestas
-
+    # 4. Manejo de errores y respuestas al usuario
     if error_message:
         if is_client_error:
             raise HTTPException(
@@ -81,7 +92,7 @@ async def translate_sql(
     return TranslationResponseDTO(
         sql_query=request.sql_query,
         cypher_query=cypher_result,
-        metadata={"dialect": request.source_db_type, "status": "success"},
+        metadata={"dialect": source_dialect, "status": "success"},
     )
 
 
