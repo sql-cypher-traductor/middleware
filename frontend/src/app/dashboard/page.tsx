@@ -51,7 +51,6 @@ export default function DashboardPage() {
   const [selectedConn, setSelectedConn] = useState<DbConnection | undefined>(
     undefined,
   );
-  const [userName] = useState("Usuario"); // Estado para el nombre
 
   // Cargar conexiones y datos de usuario
   const fetchConnections = async () => {

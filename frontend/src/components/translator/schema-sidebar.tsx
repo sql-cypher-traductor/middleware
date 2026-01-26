@@ -1,4 +1,3 @@
-//
 "use client";
 
 import { useState, useEffect } from "react";
@@ -39,12 +38,21 @@ export function SchemaSidebar({ connectionId, onInsert }: SchemaSidebarProps) {
   useEffect(() => {
     if (!connectionId) return;
 
-    setLoading(true);
-    api
-      .get(`/connections/${connectionId}/schema`)
-      .then((res) => setSchema(res.data))
-      .catch((err) => console.error("Error cargando esquema", err))
-      .finally(() => setLoading(false));
+    // 1. Definir función asíncrona dentro del efecto
+    const fetchSchema = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get(`/connections/${connectionId}/schema`);
+        setSchema(res.data);
+      } catch (err) {
+        console.error("Error cargando esquema", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // 2. Invocar la función
+    fetchSchema();
   }, [connectionId]);
 
   const toggleTable = (table: string) => {

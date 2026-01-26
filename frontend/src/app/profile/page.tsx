@@ -1,4 +1,3 @@
-//
 "use client";
 
 import React, { useState } from "react";
@@ -7,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AxiosError } from "axios";
 import {
   Card,
   CardContent,
@@ -14,6 +14,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+// Definir la forma de la respuesta de error esperada
+interface ErrorResponse {
+  detail: string;
+}
 
 export default function ProfilePage() {
   const [passwords, setPasswords] = useState({
@@ -38,9 +43,13 @@ export default function ProfilePage() {
       });
       toast.success("Contraseña actualizada correctamente");
       setPasswords({ current: "", new: "", confirm: "" });
-    } catch (error: any) {
+    } catch (error) {
+      // 2. Tipado seguro del error
+      const err = error as AxiosError<ErrorResponse>;
+      const msg = err.response?.data?.detail || "Ocurrió un error inesperado";
+
       toast.error("Error al actualizar", {
-        description: error.response?.data?.detail,
+        description: msg,
       });
     } finally {
       setLoading(false);

@@ -24,11 +24,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Play, Loader2, ArrowRightLeft, LayoutDashboard } from "lucide-react";
+import {
+  Play,
+  Loader2,
+  ArrowRightLeft,
+  LayoutDashboard,
+  Download,
+  FileJson,
+  FileText,
+} from "lucide-react";
 import { GraphView } from "@/components/visualizer/graph-view";
 import { AxiosError } from "axios";
 import { UserNav } from "@/components/dashboard/user-nav";
 import { DbConnection } from "@/types/db-connection";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface GraphNode {
   id: string | number;
@@ -68,6 +82,7 @@ export default function TranslatorPage() {
   const [selectedConnId, setSelectedConnId] = useState<string>("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [refreshHistory, setRefreshHistory] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   const [graphData, setGraphData] = useState<{
     nodes: GraphNode[];
@@ -179,6 +194,42 @@ export default function TranslatorPage() {
     toast.info(`Insertado: ${text}`);
   };
 
+  const handleExport = async (format: "csv" | "json") => {
+    if (!cypherCode || !selectedConnId) {
+      toast.error("Ejecuta una traducción y selecciona una conexión primero.");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const response = await api.post(
+        "/execute/export", // Asegúrate que el path coincida con tu router (si execution.py está en /execute)
+        {
+          connection_id: selectedConnId,
+          cypher_query: cypherCode,
+          format: format,
+        },
+        { responseType: "blob" }, // Importante para recibir archivos binarios
+      );
+
+      // Crear URL temporal para descarga
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `consulta_export.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      toast.success(`Exportación a ${format.toUpperCase()} exitosa`);
+    } catch (error) {
+      console.error("Error exportando:", error);
+      toast.error("Error al exportar resultados");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const renderResultsTable = () => {
     if (!graphData.nodes || graphData.nodes.length === 0) {
       return (
@@ -257,14 +308,11 @@ export default function TranslatorPage() {
             >
               <LayoutDashboard className="h-5 w-5 text-slate-500" />
             </Button>
-
-            <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2" /> {/* Separador visual */}
-
+            <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2" />{" "}
+            {/* Separador visual */}
             <UserNav />
-
             <h1 className="font-bold text-lg">Espacio de Trabajo</h1>
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
-
             <Select value={selectedConnId} onValueChange={setSelectedConnId}>
               <SelectTrigger className="w-50">
                 <SelectValue placeholder="Conexión Origen" />
@@ -318,20 +366,49 @@ export default function TranslatorPage() {
               <span className="text-sm font-medium text-slate-500 ml-1">
                 Resultados
               </span>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleExecute}
-                disabled={isExecuting || !cypherCode}
-                className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-800 dark:text-indigo-400"
-              >
-                {isExecuting ? (
-                  <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                ) : (
-                  <Play className="h-3 w-3 mr-2" />
-                )}
-                Ejecutar en Neo4j
-              </Button>
+
+              <div className="flex gap-2">
+                {/* BOTÓN DE EXPORTAR (NUEVO) */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isExporting || !cypherCode}
+                    >
+                      {isExporting ? (
+                        <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                      ) : (
+                        <Download className="h-3 w-3 mr-2" />
+                      )}
+                      Exportar
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleExport("csv")}>
+                      <FileText className="mr-2 h-4 w-4" /> CSV (Excel)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport("json")}>
+                      <FileJson className="mr-2 h-4 w-4" /> JSON
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleExecute}
+                  disabled={isExecuting || !cypherCode}
+                  className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-800 dark:text-indigo-400"
+                >
+                  {isExecuting ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                  ) : (
+                    <Play className="h-3 w-3 mr-2" />
+                  )}
+                  Ejecutar en Neo4j
+                </Button>
+              </div>
             </div>
 
             <Tabs

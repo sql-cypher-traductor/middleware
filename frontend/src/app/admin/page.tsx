@@ -13,8 +13,18 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+interface DashboardStats {
+  kpis: {
+    users: number;
+    translations: number;
+    error_rate: number;
+    connections: number;
+  };
+}
+
 export default function AdminPage() {
-  const [stats, setStats] = useState<any>(null);
+  // 2. Aplicación del tipo en el useState
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     api.get("/admin/stats").then((res) => setStats(res.data));
