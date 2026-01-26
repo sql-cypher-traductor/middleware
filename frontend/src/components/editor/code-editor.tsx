@@ -2,7 +2,6 @@
 
 import { Editor } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 interface CodeEditorProps {
   value: string;
@@ -18,16 +17,6 @@ export function CodeEditor({
   readOnly = false,
 }: CodeEditorProps) {
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted)
-    return (
-      <div className="h-full w-full bg-slate-100 dark:bg-slate-900 animate-pulse" />
-    );
 
   return (
     <div className="h-full w-full border rounded-md overflow-hidden shadow-sm">
@@ -38,6 +27,9 @@ export function CodeEditor({
         value={value}
         theme={theme === "dark" ? "vs-dark" : "light"}
         onChange={onChange}
+        loading={
+          <div className="h-full w-full bg-slate-100 dark:bg-slate-900 animate-pulse" />
+        }
         options={{
           readOnly: readOnly,
           minimap: { enabled: false }, // Ahorrar espacio

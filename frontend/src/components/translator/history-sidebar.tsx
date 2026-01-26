@@ -5,14 +5,13 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import api from "@/lib/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { History, ArrowRight, XCircle, CheckCircle2 } from "lucide-react";
+import { History } from "lucide-react";
 
 // Tipo para el historial
 interface TranslationEntry {
   id: number;
-  source_sql: string;
-  target_cypher?: string;
+  sql_query: string;
+  cypher_query?: string;
   error_message?: string;
   created_at: string;
 }
@@ -40,7 +39,7 @@ export function HistorySidebar({
     <div className="w-80 border-r bg-slate-50 dark:bg-slate-950 flex flex-col h-full">
       <div className="p-4 border-b flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200">
         <History className="w-4 h-4" />
-        Historial Reciente
+        Historial de Consultas
       </div>
 
       <ScrollArea className="flex-1">
@@ -54,7 +53,7 @@ export function HistorySidebar({
           {history.map((item) => (
             <button
               key={item.id}
-              onClick={() => onSelect(item.source_sql, item.target_cypher)}
+              onClick={() => onSelect(item.sql_query, item.cypher_query)}
               className="w-full text-left p-3 rounded-lg border bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group relative overflow-hidden"
             >
               <div
@@ -74,7 +73,7 @@ export function HistorySidebar({
               </div>
 
               <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-2 pl-2">
-                {item.source_sql}
+                {item.sql_query}
               </p>
             </button>
           ))}

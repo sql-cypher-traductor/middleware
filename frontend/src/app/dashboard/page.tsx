@@ -13,7 +13,6 @@ import {
   Server,
   MoreHorizontal,
   Plug,
-  Code2,
   ArrowRight,
 } from "lucide-react";
 
@@ -156,8 +155,8 @@ export default function DashboardPage() {
             <Plus className="mr-2 h-4 w-4" /> Nueva Conexión
           </Button>
           <Button
-              onClick={() => router.push('/translate')}
-              className="bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20"
+            onClick={() => router.push("/translate")}
+            className="bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20"
           >
             Ir al Traductor <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

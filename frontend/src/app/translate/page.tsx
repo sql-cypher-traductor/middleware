@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Play, Loader2, ArrowRightLeft, LayoutDashboard } from "lucide-react";
+import { AxiosError } from "axios";
 import { DbConnection } from "@/types/db-connection";
 
 export default function TranslatorPage() {
@@ -53,21 +54,33 @@ export default function TranslatorPage() {
 
     try {
       const res = await api.post("/translate", {
-        // Endpoint según router
         sql_query: sqlCode,
         source_db_type: dialect,
       });
 
       setCypherCode(res.data.cypher_query || "// No se generó código");
       toast.success("Traducción completada");
-      setRefreshHistory((prev) => prev + 1); // Recargar historial
-    } catch (error: any) {
+      setRefreshHistory((prev) => prev + 1);
+    } catch (error) {
       console.error(error);
-      const msg =
-        error.response?.data?.detail?.reason || "Error en la traducción";
+      type ErrorResponse = {
+        detail: string | { reason: string };
+      };
+
+      const err = error as AxiosError<ErrorResponse>;
+      let msg = "Error en la traducción";
+
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        if (typeof detail === "string") {
+          msg = detail;
+        } else if (typeof detail === "object" && detail.reason) {
+          msg = detail.reason;
+        }
+      }
       toast.error("Falló la traducción", { description: msg });
       setCypherCode(`// ERROR:\n// ${msg}`);
-      setRefreshHistory((prev) => prev + 1); // Recargar para ver el error
+      setRefreshHistory((prev) => prev + 1);
     } finally {
       setIsTranslating(false);
     }
@@ -92,10 +105,10 @@ export default function TranslatorPage() {
         <header className="h-16 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-900">
           <div className="flex items-center gap-4">
             <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.push('/dashboard')}
-                title="Volver al Dashboard"
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/dashboard")}
+              title="Volver al Dashboard"
             >
               <LayoutDashboard className="h-5 w-5 text-slate-500" />
             </Button>
