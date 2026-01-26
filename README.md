@@ -71,12 +71,12 @@
 **Objetivo:** No solo traducir texto, sino ejecutarlo y ver el grafo.
 
 ### Backend (Drivers):
-- [ ] Servicio de Ejecución en Neo4j: Recibe Cypher $\rightarrow$ Conecta $\rightarrow$ Ejecuta $\rightarrow$ Retorna JSON.
-- [ ] Implementar Timeout y manejo de errores de ejecución (ej. "Database offline").
+- [x] Servicio de Ejecución en Neo4j: Recibe Cypher $\rightarrow$ Conecta $\rightarrow$ Ejecuta $\rightarrow$ Retorna JSON.
+- [x] Implementar Timeout y manejo de errores de ejecución (ej. "Database offline").
 
 ### Frontend (Viz):
-- [ ] Implementar visualizador de grafos (react-force-graph).
-- [ ] Pestañas de resultados: Vista JSON, Vista Tabla, Vista Grafo.
+- [x] Implementar visualizador de grafos (react-force-graph).
+- [x] Pestañas de resultados: Vista JSON, Vista Tabla, Vista Grafo.
 
 **Entregable:** El usuario puede ver sus nodos y relaciones bailando en la pantalla después de ejecutar una consulta.
 
