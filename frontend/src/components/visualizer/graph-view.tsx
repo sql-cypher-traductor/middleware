@@ -38,17 +38,11 @@ interface GraphData {
   links: GraphLink[];
 }
 
-interface ForceGraphMethods {
-  d3Force: (
-    forceName: string,
-  ) => { strength?: (value: number) => void } | undefined;
-  zoomToFit?: (duration: number, padding: number) => void;
-}
-
 export function GraphView({ data }: { data: GraphData }) {
   const { theme } = useTheme();
 
-  const graphRef = useRef<ForceGraphMethods | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const graphRef = useRef<any>(undefined);
 
   // Ajustar colores según tema claro/oscuro
   const bgColor = theme === "dark" ? "#020617" : "#ffffff";
@@ -56,7 +50,7 @@ export function GraphView({ data }: { data: GraphData }) {
   const textColor = theme === "dark" ? "#e2e8f0" : "#1e293b";
 
   useEffect(() => {
-    const graph = graphRef.current as ForceGraphMethods | null;
+    const graph = graphRef.current;
     if (graph) {
       const chargeForce = graph.d3Force("charge");
       if (chargeForce && typeof chargeForce.strength === "function") {

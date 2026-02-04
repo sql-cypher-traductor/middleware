@@ -32,6 +32,11 @@ class UserCreateDTO(UserDTO):
     full_name: Optional[str] = None
 
 
+class UserUpdateDTO(BaseModel):
+    full_name: str | None = None
+    email: EmailStr | None = None
+
+
 class UserResponseDTO(UserDTO):
     """
     DTO que devuelve la información del usuario.
@@ -51,3 +56,11 @@ class UserResponseDTO(UserDTO):
 
     class Config:
         from_attributes = True
+
+
+class UserUpdateAdminDTO(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    is_active: Optional[bool] = None
+    is_superuser: Optional[bool] = None
+    password: Optional[str] = None

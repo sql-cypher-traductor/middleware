@@ -9,9 +9,9 @@ interface AuthLayoutProps {
   sideContent: {
     title: string;
     description: string;
-    ctaText: string;
-    ctaLink: string;
-    ctaLabel: string;
+    ctaText?: string;
+    ctaLink?: string;
+    ctaLabel?: string;
   };
 }
 
@@ -49,19 +49,24 @@ export function AuthLayout({
             </p>
           </div>
 
-          <div className="pt-8 border-t border-slate-800 w-full flex flex-col items-center gap-4">
-            <p className="text-sm text-slate-500 font-medium uppercase tracking-wider font-mono">
-              {sideContent.ctaText}
-            </p>
-            <Link href={sideContent.ctaLink}>
-              <Button
-                variant="outline"
-                className="border-indigo-500/30 hover:bg-indigo-500/10 text-indigo-400 hover:text-indigo-300 min-w-40"
-              >
-                {sideContent.ctaLabel}
-              </Button>
-            </Link>
-          </div>
+          {/* Renderizado condicional del CTA */}
+          {sideContent.ctaLink &&
+            sideContent.ctaText &&
+            sideContent.ctaLabel && (
+              <div className="pt-8 border-t border-slate-800 w-full flex flex-col items-center gap-4">
+                <p className="text-sm text-slate-500 font-medium uppercase tracking-wider font-mono">
+                  {sideContent.ctaText}
+                </p>
+                <Link href={sideContent.ctaLink}>
+                  <Button
+                    variant="outline"
+                    className="border-indigo-500/30 hover:bg-indigo-500/10 text-indigo-400 hover:text-indigo-300 min-w-40"
+                  >
+                    {sideContent.ctaLabel}
+                  </Button>
+                </Link>
+              </div>
+            )}
         </div>
       </div>
 
@@ -78,15 +83,20 @@ export function AuthLayout({
           {/* Aquí se renderiza el formulario (Login o Register) */}
           {children}
 
-          <p className="px-8 text-center text-sm text-slate-500 lg:hidden">
-            {sideContent.ctaText}{" "}
-            <Link
-              href={sideContent.ctaLink}
-              className="underline underline-offset-4 hover:text-indigo-400"
-            >
-              {sideContent.ctaLabel}
-            </Link>
-          </p>
+          {/* Renderizado condicional del CTA móvil */}
+          {sideContent.ctaLink &&
+            sideContent.ctaText &&
+            sideContent.ctaLabel && (
+              <p className="px-8 text-center text-sm text-slate-500 lg:hidden">
+                {sideContent.ctaText}{" "}
+                <Link
+                  href={sideContent.ctaLink}
+                  className="underline underline-offset-4 hover:text-indigo-400"
+                >
+                  {sideContent.ctaLabel}
+                </Link>
+              </p>
+            )}
         </div>
       </div>
     </div>
