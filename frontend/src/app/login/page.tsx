@@ -20,6 +20,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import api from "@/lib/api";
 import { AxiosError } from "axios";
+import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.email("Email inválido"),
@@ -64,12 +65,11 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title="Iniciar Sesión"
-      subtitle="Accede a tus proyectos y conexiones."
+      subtitle=""
       sideContent={{
         title: "Bienvenido de vuelta",
-        description:
-          "Continúa optimizando tus consultas y gestionando tus bases de datos desde un solo lugar.",
-        ctaText: "¿No tienes cuenta?",
+        description: "",
+        ctaText: "¿Aún no tienes una cuenta?",
         ctaLink: "/register",
         ctaLabel: "Regístrate",
       }}
@@ -83,7 +83,7 @@ export default function LoginPage() {
               <FormItem>
                 <FormLabel>Correo Electrónico</FormLabel>
                 <FormControl>
-                  <Input placeholder="nombre@empresa.com" {...field} />
+                  <Input placeholder="user@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -96,12 +96,12 @@ export default function LoginPage() {
               <FormItem>
                 <div className="flex items-center justify-between">
                   <FormLabel>Contraseña</FormLabel>
-                  {/*<Link
+                  <Link
                     href="/forgot-password"
                     className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline"
                   >
                     ¿Olvidaste tu contraseña?
-                  </Link>*/}
+                  </Link>
                 </div>
                 <FormControl>
                   <Input type="password" placeholder="••••••" {...field} />

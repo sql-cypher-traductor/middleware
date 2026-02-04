@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -7,6 +9,7 @@ from ...core import security, database
 from ...api import deps
 from ...dto import ConnectionCreateDTO, ConnectionResponseDTO, ConnectionUpdateDTO
 from ...models import User, DbConnection
+from ...services.schema_service import SchemaInspector
 
 router = APIRouter(tags=["Conexiones a BD"])
 
@@ -184,3 +187,42 @@ def test_connection_endpoint(
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Fallo de conexión: {str(e)}")
+
+
+@router.get("/{connection_id}/schema")
+def get_connection_schema(
+    connection_id: UUID,  # OJO: Si cambiaste a UUID en BD, usa UUID aquí también
+    db: Session = Depends(database.get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Obtiene la estructura de tablas y columnas de una conexión.
+    """
+    conn = (
+        db.query(DbConnection)
+        .filter(
+            DbConnection.id == connection_id, DbConnection.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not conn:
+        raise HTTPException(status_code=404, detail="Conexión no encontrada")
+
+    # Construir URL de conexión según el motor
+    # Nota: Asegúrate de desencriptar la contraseña aquí
+    password = conn.encrypted_password  # Aquí deberías usar tu utils.decrypt
+
+    db_url = ""
+    if conn.engine == "sqlserver":
+        # Driver estándar para SQL Server
+        db_url = f"mssql+pyodbc://{conn.username}:{password}@{conn.host}:{conn.port}/{conn.db_name}?driver=ODBC+Driver+17+for+SQL+Server"
+    elif conn.engine == "postgresql":
+        db_url = f"postgresql://{conn.username}:{password}@{conn.host}:{conn.port}/{conn.db_name}"
+    # ... otros motores
+
+    try:
+        inspector = SchemaInspector(db_url)
+        return inspector.get_schema_structure()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
