@@ -1,15 +1,19 @@
 import os
+import sys
+from configparser import ConfigParser
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from urllib.parse import quote_plus
 
 from alembic import context
+from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
 
-# =============== IMPORTACIÓN DE MODELOS ===============
-from app.core.database import Base
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-# from app import models
+load_dotenv()
+
+# from app.db.database import Base
+# from app.models.user import User
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,20 +22,36 @@ config = context.config
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
+    file_config = ConfigParser(interpolation=None)
+    file_config.read(config.config_file_name)
+    config.file_config = file_config
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+
+DB_URL = (
+    f"postgresql://{DB_USER}:{quote_plus(DB_PASSWORD)}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
+
+config.set_main_option("sqlalchemy.url", DB_URL)
+
+if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# target_metadata = None
-target_metadata = Base.metadata
+# from myapp import mymodel
+# target_metadata = Base.metadata
+target_metadata = None
 
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-def get_url():
-    return os.getenv("DATABASE_URL")
 
 
 def run_migrations_offline() -> None:
@@ -46,7 +66,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = get_url()
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -65,11 +85,8 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = get_url()
-
     connectable = engine_from_config(
-        configuration,
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

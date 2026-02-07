@@ -4,25 +4,14 @@ uvicorn[standard]
 
 # Bases de datos y ORM
 sqlalchemy
-alembic
+psycopg2
 psycopg2-binary
-asyncpg
-
-# Parseo
-sqlglot
+alembic
+supabase
 
 # Utilidades
 python-dotenv
-python-multipart
-pydantic-settings
-pydantic[email]
 
-# Seguridad
-bcrypt
-python-jose[cryptography]
-cryptography
-
-# Conectores de bases de datos
-neo4j
-pymssql
-pyodbc
+# Linters y formateadores
+black
+ruff

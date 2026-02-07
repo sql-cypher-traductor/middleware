@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.router import auth, connections, translator, execution, admin, users
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -27,16 +25,10 @@ app.add_middleware(
 )
 
 # Agregar enrutadores
-app.include_router(auth.router, prefix="/api/auth")
-app.include_router(connections.router, prefix="/api/connections")
-app.include_router(translator.router, prefix="/api/translate")
-app.include_router(execution.router, prefix="/api/execute")
-app.include_router(admin.router, prefix="/api/admin")
-app.include_router(users.router, prefix="/api/users")
 
 
 @app.get("/")
-def read_root():
+def health_check():
     return {
         "status": "ok",
         "message": "Middleware operativo",

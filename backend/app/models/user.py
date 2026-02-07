@@ -1,29 +1,26 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, DateTime
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, UUID, String, Boolean, DateTime, Enum
 from sqlalchemy.sql import func
+from sqlalchemy.sql.functions import now
 
-from ..core.database import Base
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
+from .enums.user_role import UserRole
+from ..db.database import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    full_name = Column(String, nullable=True)
-    hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    connections = relationship("DbConnection", back_populates="owner")
-    translations = relationship(
-        "Translation", back_populates="user", cascade="all, delete-orphan"
+    user_id = Column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4(), index=True
     )
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False, index=True)
+    password = Column(String, nullable=False)
+    role = Column(Enum(UserRole), default=UserRole.DEV)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=now
+    )
+    last_login = Column(DateTime(timezone=True), nullable=True)
