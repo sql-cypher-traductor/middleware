@@ -1,17 +1,39 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/shared/Header";
 import { authService } from "@/services/authService";
 import type { UserResponse } from "@/types/auth";
-import { Loader2, Shield, Users, Settings, Database } from "lucide-react";
+import { Loader2, Users, FileText, BarChart3, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
-export default function AdminPage() {
+// Componentes de cada sección
+import { UserManagement } from "@/components/admin/UserManagement";
+import { SystemLogs } from "@/components/admin/SystemLogs";
+import { Analytics } from "@/components/admin/Analytics";
+
+type AdminTab = "users" | "logs" | "analytics";
+
+const TABS = [
+  { id: "users" as const, label: "Gestión de Usuarios", icon: Users },
+  { id: "logs" as const, label: "Logs del Sistema", icon: FileText },
+  { id: "analytics" as const, label: "Estadísticas de Uso", icon: BarChart3 },
+];
+
+function AdminContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<UserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<AdminTab>("users");
+
+  useEffect(() => {
+    const tab = searchParams.get("tab") as AdminTab;
+    if (tab && TABS.some((t) => t.id === tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function loadUser() {
@@ -31,11 +53,21 @@ export default function AdminPage() {
     loadUser();
   }, [router]);
 
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    router.push(`/admin?tab=${tab}`, { scroll: false });
+  };
+
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Loader2 className="animate-spin" size={40} />
-        <p className="text-secondary">Cargando...</p>
+      <div className="loading-container">
+        <Loader2 className="spinner" size={40} />
+        <p>Cargando...</p>
+        <style jsx>{`
+          .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 1rem; color: var(--text-secondary); }
+          .spinner { animation: spin 1s linear infinite; }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        `}</style>
       </div>
     );
   }
@@ -46,53 +78,79 @@ export default function AdminPage() {
     <div className="admin-page">
       <Header user={user} />
       <main className="admin-content">
-        <div className="container">
+        <div className="admin-container">
           <div className="admin-header">
-            <Shield size={32} className="admin-icon" />
-            <div>
-              <h1 className="text-h2">Administración del Sistema</h1>
-              <p className="text-secondary">Gestiona usuarios, conexiones y configuración del sistema.</p>
-            </div>
+            <Link href="/dashboard">
+              <div className="back-link">
+                <ChevronLeft size={20} />
+                <span>Regresar</span>
+              </div>
+            </Link>
+            <h1 className="text-h2">Administración del Sistema</h1>
           </div>
 
-          <div className="admin-grid">
-            <Link href="/admin/users" className="admin-card">
-              <Users size={32} />
-              <h3>Gestión de Usuarios</h3>
-              <p>Administrar usuarios, roles y permisos.</p>
-            </Link>
+          <div className="admin-layout">
+            <aside className="admin-sidebar">
+              <nav className="admin-nav">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      className={`nav-item ${activeTab === tab.id ? "active" : ""}`}
+                      onClick={() => handleTabChange(tab.id)}
+                    >
+                      <Icon size={18} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </aside>
 
-            <div className="admin-card disabled">
-              <Database size={32} />
-              <h3>Conexiones</h3>
-              <p>Administrar conexiones de bases de datos.</p>
-              <span className="coming-soon">Próximamente</span>
-            </div>
-
-            <div className="admin-card disabled">
-              <Settings size={32} />
-              <h3>Configuración</h3>
-              <p>Configuración general del sistema.</p>
-              <span className="coming-soon">Próximamente</span>
-            </div>
+            <section className="admin-panel">
+              {activeTab === "users" && <UserManagement />}
+              {activeTab === "logs" && <SystemLogs />}
+              {activeTab === "analytics" && <Analytics />}
+            </section>
           </div>
         </div>
       </main>
+
       <style jsx>{`
-        .admin-page { min-height: 100vh; background-color: var(--bg-primary); }
+        .admin-page { min-height: 100vh; background-color: var(--bg-secondary); }
         .admin-content { padding: 2rem 0; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
-        .admin-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem; }
-        .admin-icon { color: var(--purple-500); }
-        .text-secondary { color: var(--text-secondary); margin-top: 0.25rem; }
-        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        .admin-card { display: flex; flex-direction: column; padding: 1.5rem; background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 0.75rem; text-decoration: none; color: var(--text-primary); transition: all 0.15s ease; }
-        .admin-card:hover:not(.disabled) { border-color: var(--accent-primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .admin-card h3 { font-size: var(--text-body); font-weight: var(--font-semibold); margin: 1rem 0 0.5rem; }
-        .admin-card p { font-size: var(--text-label); color: var(--text-secondary); }
-        .admin-card.disabled { opacity: 0.6; cursor: not-allowed; }
-        .coming-soon { font-size: var(--text-caption); color: var(--text-muted); font-style: italic; margin-top: auto; padding-top: 1rem; }
+        .admin-container { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; }
+        .admin-header { margin-bottom: 2rem; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--text-secondary); text-decoration: none; font-size: var(--text-label); margin-bottom: 0.75rem; transition: color 0.15s ease; }
+        .back-link:hover { color: var(--accent-primary); }
+        .admin-layout { display: grid; grid-template-columns: 260px 1fr; gap: 2rem; }
+        .admin-sidebar { background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 0.75rem; padding: 0.5rem; height: fit-content; position: sticky; top: 80px; }
+        .admin-nav { display: flex; flex-direction: column; gap: 0.25rem; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border: none; background: transparent; border-radius: 0.5rem; font-size: var(--text-label); font-weight: var(--font-medium); color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; text-align: left; width: 100%; }
+        .nav-item:hover { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        .nav-item.active { background-color: var(--purple-500); color: white; }
+        .admin-panel { background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 0.75rem; padding: 1.5rem; min-height: 500px; }
+        @media (max-width: 900px) { .admin-layout { grid-template-columns: 1fr; } .admin-sidebar { position: static; } .admin-nav { flex-direction: row; overflow-x: auto; } .nav-item span { display: none; } }
       `}</style>
     </div>
   );
 }
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="loading-container">
+        <Loader2 className="spinner" size={40} />
+        <style jsx>{`
+          .loading-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+          .spinner { animation: spin 1s linear infinite; color: var(--accent-primary); }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        `}</style>
+      </div>
+    }>
+      <AdminContent />
+    </Suspense>
+  );
+}
+

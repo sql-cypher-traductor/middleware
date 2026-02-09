@@ -106,4 +106,3 @@ class AuthService:
             access_token=access_token,
             user=UserResponseDTO.model_validate(user),
         )
-

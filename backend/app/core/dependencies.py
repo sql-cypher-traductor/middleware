@@ -12,6 +12,7 @@ from .cookies import ACCESS_TOKEN_COOKIE, CSRF_TOKEN_COOKIE
 from ..db.database import get_db
 from ..repositories.user_repository import UserRepository
 from ..models.user import User
+from ..models.enums.user_role import UserRole
 
 # Header donde el frontend envía el token CSRF
 CSRF_HEADER_NAME = "X-CSRF-Token"
@@ -179,3 +180,67 @@ async def get_current_user_with_csrf(
 
 # Dependencia combinada: autenticación + protección CSRF
 CurrentUserWithCSRF = Annotated[User, Depends(get_current_user_with_csrf)]
+
+
+async def check_admin_role(
+    current_user: User = Depends(get_current_user_from_cookie),
+) -> User:
+    """
+    Verifica que el usuario autenticado tenga rol de administrador.
+
+    Args:
+        current_user: Usuario autenticado obtenido de la cookie.
+
+    Returns:
+        Usuario autenticado si es administrador.
+
+    Raises:
+        HTTPException: Si el usuario no tiene rol de administrador.
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permisos de administrador para realizar esta acción",
+        )
+    return current_user
+
+
+async def check_admin_role_with_csrf(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> User:
+    """
+    Verifica que el usuario sea administrador y valida el token CSRF.
+    Usar para operaciones mutables de admin (POST, PUT, PATCH, DELETE).
+
+    Args:
+        request: Objeto Request de FastAPI.
+        db: Sesión de base de datos.
+
+    Returns:
+        Usuario administrador autenticado.
+
+    Raises:
+        HTTPException: Si no es admin o el CSRF es inválido.
+    """
+    # Primero verificar CSRF
+    await verify_csrf(request)
+
+    # Obtener el usuario
+    user = await get_current_user_from_cookie(request, db)
+
+    # Verificar rol de admin
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permisos de administrador para realizar esta acción",
+        )
+
+    return user
+
+
+# Dependencia para endpoints de admin (solo lectura)
+CurrentAdmin = Annotated[User, Depends(check_admin_role)]
+
+# Dependencia para endpoints de admin con protección CSRF (operaciones mutables)
+CurrentAdminWithCSRF = Annotated[User, Depends(check_admin_role_with_csrf)]

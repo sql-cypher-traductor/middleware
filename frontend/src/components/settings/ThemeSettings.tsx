@@ -17,10 +17,7 @@ export function ThemeSettings() {
 
   return (
     <div className="theme-settings">
-      <h3 className="section-title">Tema</h3>
-      <p className="section-description">
-        Selecciona cómo quieres que se vea la interfaz de SQL2Graph.
-      </p>
+      <h3 className="section-title">Tema del Sistema</h3>
 
       <div className="theme-options">
         {THEME_OPTIONS.map((option) => {
@@ -43,73 +40,68 @@ export function ThemeSettings() {
       </div>
 
       <style jsx>{`
-        .theme-settings {
-          max-width: 500px;
-        }
+          .theme-settings {
+              max-width: 500px;
+          }
 
-        .section-title {
-          font-size: var(--text-h3);
-          font-weight: var(--font-semibold);
-          color: var(--text-primary);
-          margin-bottom: 0.5rem;
-        }
+          .section-title {
+              font-size: var(--text-h3);
+              font-weight: var(--font-semibold);
+              color: var(--text-primary);
+              margin: 0.5rem 0;
+          }
 
-        .section-description {
-          font-size: var(--text-body);
-          color: var(--text-secondary);
-          margin-bottom: 1.5rem;
-        }
+          .theme-options {
+              display: flex;
+              gap: 2rem;
+          }
 
-        .theme-options {
-          display: flex;
-          gap: 1rem;
-        }
+          .theme-option {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 0.75rem;
+              margin: 0.5rem 0;
+              padding: 1.5rem 1rem;
+              background-color: var(--bg-tertiary);
+              border: 2px solid var(--border-primary);
+              border-radius: 0.75rem;
+              cursor: pointer;
+              transition: all 0.15s ease;
+          }
 
-        .theme-option {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 1.5rem 1rem;
-          background-color: var(--bg-tertiary);
-          border: 2px solid var(--border-primary);
-          border-radius: 0.75rem;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
+          .theme-option:hover {
+              border-color: var(--accent-primary);
+          }
 
-        .theme-option:hover {
-          border-color: var(--accent-primary);
-        }
+          .theme-option.active {
+              border-color: var(--accent-primary);
+              background-color: rgba(6, 182, 212, 0.1);
+          }
 
-        .theme-option.active {
-          border-color: var(--accent-primary);
-          background-color: rgba(6, 182, 212, 0.1);
-        }
+          .option-icon {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 48px;
+              height: 48px;
+              border-radius: 50%;
+              background-color: var(--bg-secondary);
+              color: var(--text-secondary);
+              transition: all 0.15s ease;
+          }
 
-        .option-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background-color: var(--bg-secondary);
-          color: var(--text-secondary);
-          transition: all 0.15s ease;
-        }
+          .theme-option.active .option-icon {
+              background-color: var(--accent-primary);
+              color: white;
+          }
 
-        .theme-option.active .option-icon {
-          background-color: var(--accent-primary);
-          color: white;
-        }
-
-        .option-label {
-          font-size: var(--text-label);
-          font-weight: var(--font-medium);
-          color: var(--text-primary);
-        }
+          .option-label {
+              font-size: var(--text-label);
+              font-weight: var(--font-medium);
+              color: var(--text-primary);
+          }
       `}</style>
     </div>
   );

@@ -1,8 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useSyncExternalStore } from "react";
 import Image from "next/image";
 import { useTheme } from "@/hooks/useTheme";
+
+// Hook para detectar si estamos en el cliente (evita error de hidratación)
+function useIsMounted() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,  // En cliente, siempre true
+    () => false  // En servidor, siempre false
+  );
+}
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -12,9 +21,16 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, mode, onToggleMode }: AuthLayoutProps) {
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const isMounted = useIsMounted();
 
   const isLogin = mode === "login";
+
+  // Usar un valor por defecto durante SSR, luego el valor real del tema
+  const logoSrc = isMounted
+    ? resolvedTheme === "dark"
+      ? "/logo1.png"
+      : "/logo2.png"
+    : "/logo2.png"; // Valor por defecto durante SSR
 
   return (
     <div className="auth-container">
@@ -36,7 +52,7 @@ export function AuthLayout({ children, mode, onToggleMode }: AuthLayoutProps) {
           {/* Logo */}
           <div className="auth-logo">
             <Image
-              src={isDark ? "/logo1.png" : "/logo2.png"}
+              src={logoSrc}
               alt="SQL2Graph Logo"
               width={300}
               height={300}

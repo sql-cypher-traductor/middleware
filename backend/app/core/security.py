@@ -137,3 +137,31 @@ def verify_csrf_token(csrf_token: str, session_id: str) -> bool:
     except JWTError:
         return False
 
+
+def create_password_reset_token(email: str) -> str:
+    expires_delta = timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + expires_delta
+    # El 'scope' evita que este token se use para iniciar sesión
+    to_encode = {"exp": expire, "sub": email, "scope": "password_reset"}
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
+    return encoded_jwt
+
+
+def verify_password_reset_token(token: str) -> str | None:
+    """
+    Decodifica el token y extrae el email si es válido y tiene el scope correcto.
+    Retorna el email o None si falló la validación.
+    """
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        email: str = payload.get("sub")
+        scope: str = payload.get("scope")
+
+        if email is None or scope != "password_reset":
+            return None
+
+        return email
+    except JWTError:
+        return None

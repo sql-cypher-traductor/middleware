@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/shared/Header";
 import { authService } from "@/services/authService";
@@ -21,7 +21,7 @@ const TABS = [
   { id: "connections" as const, label: "Conexiones", icon: Database },
 ];
 
-export default function SettingsPage() {
+function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<UserResponse | null>(null);
@@ -60,9 +60,14 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Loader2 className="animate-spin" size={40} />
-        <p className="text-secondary">Cargando...</p>
+      <div className="loading-container">
+        <Loader2 className="spinner" size={40} />
+        <p>Cargando...</p>
+        <style jsx>{`
+          .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 1rem; color: var(--text-secondary); }
+          .spinner { animation: spin 1s linear infinite; }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        `}</style>
       </div>
     );
   }
@@ -75,7 +80,7 @@ export default function SettingsPage() {
       <main className="settings-content">
         <div className="settings-container">
           <div className="settings-header">
-            <Link href="/dashboard" className="">
+            <Link href="/dashboard">
               <div className="back-link">
                 <ChevronLeft size={20} />
                 <span>Regresar</span>
@@ -129,3 +134,23 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="loading-container">
+          <Loader2 className="spinner" size={40} />
+          <style jsx>{`
+            .loading-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+            .spinner { animation: spin 1s linear infinite; color: var(--accent-primary); }
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          `}</style>
+        </div>
+      }
+    >
+      <SettingsContent />
+    </Suspense>
+  );
+}
+

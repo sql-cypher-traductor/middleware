@@ -1,17 +1,26 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, status, HTTPException
 from sqlalchemy.orm import Session
 
 from ..core.cookies import set_auth_cookies, clear_auth_cookies
 from ..core.dependencies import CurrentUser
-from ..core.security import create_csrf_token
+from ..core.security import (
+    create_csrf_token,
+    create_password_reset_token,
+    verify_password_reset_token,
+    hash_password,
+)
 from ..db.database import get_db
 from ..dto.user_dto import (
     UserCreateDTO,
     UserResponseDTO,
     LoginDTO,
     LoginResponseDTO,
+    PasswordResetRequestDTO,
+    PasswordResetConfirmDTO,
 )
+from ..repositories.user_repository import UserRepository
 from ..services.auth_service import AuthService
+from ..services.email_service import send_reset_password_email
 
 router = APIRouter(prefix="/api/auth", tags=["Autenticación"])
 
@@ -143,3 +152,57 @@ def refresh_csrf_token(
 
     return {"message": "Token CSRF actualizado"}
 
+
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+def forgot_password(request: PasswordResetRequestDTO, db: Session = Depends(get_db)):
+    """
+    Inicia el flujo de recuperación de contraseña.
+    """
+    user_repo = UserRepository(db)
+
+    user = user_repo.get_by_email(email=request.email)
+
+    if user:
+        token = create_password_reset_token(email=user.email)
+        send_reset_password_email(email_to=user.email, token=token)
+
+    # 3. Retornar mensaje genérico
+    return {
+        "message": "Si el correo existe en nuestro sistema, recibirás un enlace de recuperación."
+    }
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+def reset_password(conf: PasswordResetConfirmDTO, db: Session = Depends(get_db)):
+    """
+    Verifica el token y actualiza la contraseña del usuario.
+    """
+    # 1. Verificar Token
+    email = verify_password_reset_token(conf.token)
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El token es inválido o ha expirado.",
+        )
+
+    # 2. Buscar Usuario
+    user_repo = UserRepository(db)
+    user = user_repo.get_by_email(email)
+
+    if not user:
+        # Esto es raro si el token era válido, pero por seguridad:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado."
+        )
+
+    # 3. Actualizar Contraseña
+    # Hashear la nueva clave
+    hashed_password = hash_password(conf.new_password)
+
+    # Asignamos y guardamos
+    user.password = hashed_password
+    user_repo.update(user)
+
+    return {
+        "message": "Contraseña actualizada correctamente. Ahora puedes iniciar sesión."
+    }

@@ -36,15 +36,15 @@
 ## AUM-03: Restablecimiento de Contraseña
 
 ### 🛠️ Backend
-1. **Endpoint Solicitud:** `POST /auth/forgot-password`. Genera un token temporal con expiración corta (ej. 15 min) y envíalo por correo (puedes integrar *Resend* o el servicio de SMTP de Supabase).
-2. **Endpoint Reset:** `POST /auth/reset-password`. Recibe el token y la nueva contraseña. El token debe almacenarse en BD solo en forma de **hash no reversible**, estar vinculado a un usuario y al propósito concreto de **restablecimiento de contraseña**, y contar con metadatos como `issued_at`/`expires_at` y un flag de `consumed`. Al recibir la petición, busca el token por su hash, verifica que no esté expirado ni consumido y que coincida con el usuario; si es válido, actualiza la contraseña, marca el token como **consumido (de un solo uso)** e invalídalo tras el uso.
-3. **Seguridad:** El mensaje de respuesta al solicitar el reset debe ser: *"Si el correo existe en nuestro sistema, recibirás un enlace"*, para evitar enumeración de cuentas.
+1. [x] **Endpoint Solicitud:** `POST /auth/forgot-password`. Genera un token temporal con expiración corta (ej. 15 min) y envíalo por correo (puedes integrar *Resend* o el servicio de SMTP de Supabase).
+2. [x] **Endpoint Reset:** `POST /auth/reset-password`. Recibe el token y la nueva contraseña. El token debe almacenarse en BD solo en forma de **hash no reversible**, estar vinculado a un usuario y al propósito concreto de **restablecimiento de contraseña**, y contar con metadatos como `issued_at`/`expires_at` y un flag de `consumed`. Al recibir la petición, busca el token por su hash, verifica que no esté expirado ni consumido y que coincida con el usuario; si es válido, actualiza la contraseña, marca el token como **consumido (de un solo uso)** e invalídalo tras el uso.
+3. [x] **Seguridad:** El mensaje de respuesta al solicitar el reset debe ser: *"Si el correo existe en nuestro sistema, recibirás un enlace"*, para evitar enumeración de cuentas.
 
 ### 🎨 Frontend
-1. **Flujo:**
-   1. Vista de "Olvidé mi contraseña" (solo campo email).
-   2. Vista de "Nueva Contraseña" (accedida mediante `/reset-password?token=...`).
-2. **UX:** Indicador visual de fortaleza de contraseña (barra de colores: Rojo -> Amarillo -> Verde) mientras el usuario escribe la nueva clave.
+1. [x] **Flujo:**
+   1. [x] Vista de "Olvidé mi contraseña" (solo campo email).
+   2. [x] Vista de "Nueva Contraseña" (accedida mediante `/reset-password?token=...`).
+2. [x] **UX:** Indicador visual de fortaleza de contraseña (barra de colores: Rojo -> Amarillo -> Verde) mientras el usuario escribe la nueva clave.
 
 ---
 
@@ -58,7 +58,7 @@
    3. `DELETE /admin/users/{id}`: Eliminación lógica (soft-delete), marcando al usuario como eliminado (por ejemplo, usando un campo `deleted_at` en la base de datos).
 
 ### 🎨 Frontend
-1. **Interfaz:** Una tabla interactiva (puedes usar `shadcn/ui` con `tanstack-table`).
-2. **Acciones:** Menú de tres puntos (Dropdown) por cada fila para las opciones de editar/borrar.
-3. **UX:** * **Modal de Confirmación:** Un diálogo de alerta antes de eliminar un usuario para evitar desastres por clic accidental.
-   1. Badge de colores para los roles (ej. Azul para "Desarrollador", Violeta para "Admin").
+1. [x] **Interfaz:** Una tabla interactiva (puedes usar `shadcn/ui` con `tanstack-table`).
+2. [x] **Acciones:** Menú de tres puntos (Dropdown) por cada fila para las opciones de editar/borrar.
+3. [x] **UX:** * **Modal de Confirmación:** Un diálogo de alerta antes de eliminar un usuario para evitar desastres por clic accidental.
+   1. [x] Badge de colores para los roles (ej. Azul para "Desarrollador", Violeta para "Admin").

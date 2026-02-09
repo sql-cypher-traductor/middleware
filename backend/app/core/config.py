@@ -31,8 +31,12 @@ class Settings:
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
 
     # Configuración de Resend
-    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
-    PASSWORD_RESET_EXPIRE_MINUTES: int = int(os.getenv("PASSWORD_RESET_EXPIRE_MINUTES", "15"))
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY")
+    PASSWORD_RESET_EXPIRE_MINUTES: int = int(
+        os.getenv("PASSWORD_RESET_EXPIRE_MINUTES", "15")
+    )
+    SECRET_KEY: str = os.getenv("SECRET_KEY")
+    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "onboarding@resend.dev")
 
 
 settings = Settings()

@@ -138,3 +138,61 @@ class LoginResponseDTO(BaseModel):
 
     user: UserResponseDTO
     message: str = "Inicio de sesión exitoso"
+
+
+class PasswordResetRequestDTO(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmDTO(BaseModel):
+    token: str
+    new_password: str = Field(
+        ..., min_length=8, description="La nueva contraseña del usuario"
+    )
+
+
+# DTOs para administración de usuarios (Admin)
+
+
+class AdminUserUpdateDTO(BaseModel):
+    """
+    Esquema de datos para que un admin actualice un usuario.
+    Permite cambiar rol, estado activo/inactivo y datos básicos.
+    """
+
+    first_name: str | None = None
+    last_name: str | None = None
+    role: UserRole | None = None
+    is_active: bool | None = None
+
+
+class AdminUserResponseDTO(BaseModel):
+    """
+    Esquema de respuesta de usuario para administración.
+    Incluye información adicional como deleted_at.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: UUID
+    first_name: str
+    last_name: str
+    email: EmailStr
+    role: UserRole
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    last_login: datetime | None = None
+    deleted_at: datetime | None = None
+
+
+class PaginatedUsersResponseDTO(BaseModel):
+    """
+    Esquema de respuesta paginada de usuarios.
+    """
+
+    users: list[AdminUserResponseDTO]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

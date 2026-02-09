@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormData } from "@/lib/validations/auth";
@@ -75,7 +76,7 @@ export function LoginForm({ onSubmit, isLoading = false, error }: LoginFormProps
 
       {/* Enlace Olvidaste contraseña */}
       <div className="forgot-password">
-        <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
+        <Link href="/auth/forgot-password">¿Olvidaste tu contraseña?</Link>
       </div>
 
       <style jsx>{`
