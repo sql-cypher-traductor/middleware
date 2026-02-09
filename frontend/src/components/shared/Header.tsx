@@ -156,13 +156,13 @@ export function Header({user}: HeaderProps) {
                     border-bottom: 1px solid var(--border-primary);
                     position: sticky;
                     top: 0;
-                    z-index: 100;
+                    z-index: 1000;
                 }
 
                 .header-content {
                     max-width: 1600px;
                     height: 100%;
-                    margin: 0.5rem auto;
+                    margin: 0 auto;
                     padding: 0 1.5rem;
                     display: flex;
                     align-items: center;
@@ -250,6 +250,7 @@ export function Header({user}: HeaderProps) {
                     box-shadow: var(--shadow-lg);
                     padding: 0.5rem;
                     animation: fadeIn 0.15s ease;
+                    z-index: 1001;
                 }
 
                 @keyframes fadeIn {

@@ -1,3 +1,4 @@
 from .user import User
+from .connection import Connection
 
-__all__ = ["User"]
+__all__ = ["User", "Connection"]

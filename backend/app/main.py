@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from .api.auth_router import router as auth_router
 from .api.user_router import router as user_router
 from .api.admin_router import router as admin_router
+from .api.connection_router import router as connection_router
 from .core.config import settings
 
 load_dotenv()
@@ -43,6 +44,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(admin_router)
+app.include_router(connection_router)
 
 
 @app.get("/")
