@@ -1,5 +1,6 @@
 import uuid
 from sqlalchemy import Column, UUID, String, Boolean, DateTime, Enum
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .enums.user_role import UserRole
@@ -24,3 +25,7 @@ class User(Base):
     )
     last_login = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    queries = relationship(
+        "QueryHistory", back_populates="user", cascade="all, delete-orphan"
+    )

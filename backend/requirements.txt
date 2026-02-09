@@ -12,6 +12,7 @@ supabase
 # Drivers de conexión externos
 pyodbc
 neo4j
+sqlglot
 
 # Utilidades
 python-dotenv

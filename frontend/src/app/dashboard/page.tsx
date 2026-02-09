@@ -3,15 +3,31 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/shared/Header";
-import { ConnectionsPanel } from "@/components/dashboard/ConnectionsPanel";
+import { ConnectionsSidebar } from "@/components/connections/ConnectionsSidebar";
+import { TranslationPanel } from "@/components/translator/TranslationPanel";
+import { ResultsViewer } from "@/components/translator/ResultsViewer";
 import { authService } from "@/services/authService";
 import type { UserResponse } from "@/types/auth";
-import { Loader2, ArrowRightLeft, Play } from "lucide-react";
+import type { ConnectionResponse } from "@/types/connection";
+import type { ExecutionResponse } from "@/types/execution";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Estado de conexiones activas
+  const [activeSqlConnection, setActiveSqlConnection] = useState<ConnectionResponse | null>(null);
+  const [activeNeo4jConnection, setActiveNeo4jConnection] = useState<ConnectionResponse | null>(null);
+
+  // Resultado de ejecución
+  const [executionResult, setExecutionResult] = useState<ExecutionResponse | null>(null);
+
+  // Consultas reutilizadas desde el historial
+  const [reusedSql, setReusedSql] = useState("");
+  const [reusedCypher, setReusedCypher] = useState("");
 
   useEffect(() => {
     async function loadUser() {
@@ -19,7 +35,6 @@ export default function DashboardPage() {
         const currentUser = await authService.getCurrentUser();
         setUser(currentUser);
       } catch {
-        // Si no está autenticado, redirigir al login
         router.push("/auth");
       } finally {
         setIsLoading(false);
@@ -28,6 +43,26 @@ export default function DashboardPage() {
 
     loadUser();
   }, [router]);
+
+  // Verificar si hay una consulta reutilizada desde el historial
+  useEffect(() => {
+    const stored = sessionStorage.getItem("reuseQuery");
+    if (stored) {
+      try {
+        const { sql, cypher } = JSON.parse(stored);
+        setReusedSql(sql || "");
+        setReusedCypher(cypher || "");
+        sessionStorage.removeItem("reuseQuery");
+        toast.success("Consulta cargada desde el historial");
+      } catch {
+        console.error("Error parsing reused query");
+      }
+    }
+  }, []);
+
+  const handleExecutionResult = (result: ExecutionResponse) => {
+    setExecutionResult(result);
+  };
 
   if (isLoading) {
     return (
@@ -48,8 +83,12 @@ export default function DashboardPage() {
             animation: spin 1s linear infinite;
           }
           @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
           }
         `}</style>
       </div>
@@ -66,61 +105,50 @@ export default function DashboardPage() {
 
       <div className="dashboard-layout">
         {/* Panel lateral de conexiones */}
-        <ConnectionsPanel />
+        <ConnectionsSidebar
+          onSqlConnectionChange={setActiveSqlConnection}
+          onNeo4jConnectionChange={setActiveNeo4jConnection}
+        />
 
-        {/* Área principal de traducción */}
+        {/* Área principal */}
         <main className="main-content">
-          <div className="content-wrapper">
-            {/* Header del área de traducción */}
-            <div className="translation-header">
+          {/* Header del traductor */}
+          <div className="translator-header">
+            <div className="header-info">
               <h2 className="section-title">Traductor SQL → Cypher</h2>
               <p className="section-description">
-                Escribe tu consulta SQL y tradúcela a Cypher para Neo4j.
+                Escribe tu consulta SQL y tradúcela a Cypher para Neo4j
               </p>
             </div>
-
-            {/* Área de traducción - Placeholder */}
-            <div className="translation-area">
-              <div className="editor-panel">
-                <div className="editor-header">
-                  <span className="editor-label">SQL Query</span>
-                </div>
-                <div className="editor-placeholder">
-                  <p>Editor SQL próximamente...</p>
-                </div>
-              </div>
-
-              <div className="translation-controls">
-                <button className="translate-button" disabled>
-                  <ArrowRightLeft size={20} />
-                  <span>Traducir</span>
-                </button>
-              </div>
-
-              <div className="editor-panel">
-                <div className="editor-header">
-                  <span className="editor-label">Cypher Query</span>
-                </div>
-                <div className="editor-placeholder">
-                  <p>Resultado Cypher próximamente...</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Área de resultados - Placeholder */}
-            <div className="results-area">
-              <div className="results-header">
-                <h3 className="results-title">Resultados</h3>
-                <button className="execute-button" disabled>
-                  <Play size={16} />
-                  <span>Ejecutar</span>
-                </button>
-              </div>
-              <div className="results-placeholder">
-                <p>Los resultados de la ejecución aparecerán aquí...</p>
-              </div>
+            <div className="connection-status">
+              {activeSqlConnection && (
+                <span className="status-badge sql">
+                  SQL: {activeSqlConnection.connection_name}
+                </span>
+              )}
+              {activeNeo4jConnection && (
+                <span className="status-badge neo4j">
+                  Neo4j: {activeNeo4jConnection.connection_name}
+                </span>
+              )}
             </div>
           </div>
+
+          {/* Panel de traducción */}
+          <TranslationPanel
+            activeNeo4jConnectionId={activeNeo4jConnection?.connection_id}
+            onExecutionResult={handleExecutionResult}
+            initialSql={reusedSql}
+            initialCypher={reusedCypher}
+          />
+
+          {/* Panel de resultados - Solo visible después de ejecutar */}
+          {executionResult && (
+            <div className="results-section">
+              <h3 className="results-title">Resultados de la Ejecución</h3>
+              <ResultsViewer result={executionResult} />
+            </div>
+          )}
         </main>
       </div>
 
@@ -129,41 +157,41 @@ export default function DashboardPage() {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background-color: var(--bg-secondary);
-          position: relative;
+          background-color: var(--bg-primary);
         }
 
         .dashboard-layout {
           display: flex;
           flex: 1;
           overflow: hidden;
-          position: relative;
-          z-index: 1;
         }
 
         .main-content {
           flex: 1;
           overflow-y: auto;
           padding: 1.5rem;
-        }
-
-        .content-wrapper {
-          max-width: 1200px;
-          margin: 0 auto;
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
         }
 
-        .translation-header {
-          margin-bottom: 0.5rem;
+        .translator-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .header-info {
+          flex: 1;
         }
 
         .section-title {
           font-size: var(--text-h2);
           font-weight: var(--font-semibold);
           color: var(--text-primary);
-          margin: 0 0 0.5rem 0;
+          margin: 0 0 0.25rem 0;
         }
 
         .section-description {
@@ -172,153 +200,47 @@ export default function DashboardPage() {
           margin: 0;
         }
 
-        .translation-area {
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
-          gap: 1rem;
-          align-items: stretch;
+        .connection-status {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
         }
 
-        .editor-panel {
-          background-color: var(--bg-secondary);
-          border: 1px solid var(--border-primary);
-          border-radius: 0.75rem;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .editor-header {
-          display: flex;
+        .status-badge {
+          display: inline-flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 0.75rem 1rem;
-          background-color: var(--bg-tertiary);
-          border-bottom: 1px solid var(--border-primary);
-        }
-
-        .editor-label {
-          font-size: var(--text-label);
-          font-weight: var(--font-medium);
-          color: var(--text-primary);
-        }
-
-        .editor-placeholder {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 200px;
-          color: var(--text-muted);
-          font-size: var(--text-body);
-        }
-
-        .translation-controls {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .translate-button {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.375rem;
-          padding: 1rem;
-          background-color: var(--accent-primary);
-          color: white;
-          border: none;
-          border-radius: 0.75rem;
-          cursor: pointer;
-          transition: all 0.15s ease;
-          font-size: var(--text-label);
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: var(--text-caption);
           font-weight: var(--font-medium);
         }
 
-        .translate-button:hover:not(:disabled) {
-          background-color: var(--cyan-600);
-          transform: scale(1.05);
+        .status-badge.sql {
+          background-color: rgba(59, 130, 246, 0.15);
+          color: #3b82f6;
+          border: 1px solid rgba(59, 130, 246, 0.3);
         }
 
-        .translate-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
+        .status-badge.neo4j {
+          background-color: rgba(34, 197, 94, 0.15);
+          color: #22c55e;
+          border: 1px solid rgba(34, 197, 94, 0.3);
         }
 
-        .results-area {
-          background-color: var(--bg-secondary);
-          border: 1px solid var(--border-primary);
-          border-radius: 0.75rem;
-          overflow: hidden;
-        }
-
-        .results-header {
+        .results-section {
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0.75rem 1rem;
-          background-color: var(--bg-tertiary);
-          border-bottom: 1px solid var(--border-primary);
+          flex-direction: column;
+          gap: 0.75rem;
         }
 
         .results-title {
           font-size: var(--text-label);
-          font-weight: var(--font-medium);
+          font-weight: var(--font-semibold);
           color: var(--text-primary);
           margin: 0;
         }
 
-        .execute-button {
-          display: flex;
-          align-items: center;
-          gap: 0.375rem;
-          padding: 0.375rem 0.75rem;
-          background-color: var(--green-500);
-          color: white;
-          border: none;
-          border-radius: 0.375rem;
-          cursor: pointer;
-          font-size: var(--text-caption);
-          font-weight: var(--font-medium);
-          transition: all 0.15s ease;
-        }
-
-        .execute-button:hover:not(:disabled) {
-          background-color: var(--green-600);
-        }
-
-        .execute-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .results-placeholder {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 150px;
-          color: var(--text-muted);
-          font-size: var(--text-body);
-        }
-
         @media (max-width: 1024px) {
-          .translation-area {
-            grid-template-columns: 1fr;
-            grid-template-rows: auto auto auto;
-          }
-
-          .translation-controls {
-            padding: 0.5rem;
-          }
-
-          .translate-button {
-            flex-direction: row;
-            width: 100%;
-            justify-content: center;
-          }
-        }
-
-        @media (max-width: 768px) {
           .dashboard-layout {
             flex-direction: column;
           }
@@ -327,8 +249,17 @@ export default function DashboardPage() {
             padding: 1rem;
           }
         }
+
+        @media (max-width: 768px) {
+          .translator-header {
+            flex-direction: column;
+          }
+
+          .connection-status {
+            width: 100%;
+          }
+        }
       `}</style>
     </div>
   );
 }
-

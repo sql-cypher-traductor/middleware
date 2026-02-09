@@ -11,6 +11,7 @@ from sqlalchemy import (
     Boolean,
 )
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .enums.engine_type import EngineType
@@ -38,6 +39,8 @@ class Connection(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    queries = relationship("QueryHistory", back_populates="connection")
 
     def __repr__(self):
         return f"<Connection {self.connection_name} ({self.engine_type})>"

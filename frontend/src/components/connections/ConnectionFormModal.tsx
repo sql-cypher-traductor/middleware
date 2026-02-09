@@ -17,6 +17,7 @@ interface ConnectionFormModalProps {
   onClose: () => void;
   onSuccess: (connection: ConnectionResponse) => void;
   editConnection?: ConnectionResponse | null;
+  defaultEngineType?: EngineType;
 }
 
 export function ConnectionFormModal({
@@ -24,6 +25,7 @@ export function ConnectionFormModal({
   onClose,
   onSuccess,
   editConnection,
+  defaultEngineType = "SQL_SERVER",
 }: ConnectionFormModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -80,9 +82,9 @@ export function ConnectionFormModal({
     } else {
       reset({
         connection_name: "",
-        engine_type: "SQL_SERVER",
+        engine_type: defaultEngineType,
         host: "localhost",
-        port: DEFAULT_PORTS.SQL_SERVER,
+        port: DEFAULT_PORTS[defaultEngineType],
         database_name: "",
         username_db: "",
         password_db: "",
@@ -91,7 +93,7 @@ export function ConnectionFormModal({
     setTestResult(null);
     setError(null);
     setShowPassword(false);
-  }, [editConnection, reset, isOpen]);
+  }, [editConnection, reset, isOpen, defaultEngineType]);
 
   const handleTestConnection = async () => {
     const values = watch();

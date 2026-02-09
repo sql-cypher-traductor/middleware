@@ -2,4 +2,5 @@
 export * from "./auth";
 // Exportar tipos de conexiones
 export * from "./connection";
-
+// Exportar tipos de ejecución
+export * from "./execution";
