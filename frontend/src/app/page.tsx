@@ -1,3 +1,7 @@
+"use client";
+
+import {redirect} from "next/navigation";
+
 export default function Home() {
-  return "Hola, ¡Bienvenido a SQ2Graph System!";
+  redirect("/auth");
 }
