@@ -9,6 +9,10 @@ psycopg2-binary
 alembic
 supabase
 
+# Drivers de conexión externos
+pyodbc
+neo4j
+
 # Utilidades
 python-dotenv
 
@@ -18,6 +22,7 @@ pydantic[email]
 # Seguridad
 bcrypt
 python-jose[cryptography]
+cryptography
 
 # Correo electrónico
 resend
