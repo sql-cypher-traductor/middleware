@@ -1,124 +1,156 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import api from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Activity, AlertTriangle, Database } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import React, { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Header } from "@/components/shared/Header";
+import { authService } from "@/services/authService";
+import type { UserResponse } from "@/types/auth";
+import { Loader2, Users, FileText, BarChart3, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
-interface DashboardStats {
-  kpis: {
-    users: number;
-    translations: number;
-    error_rate: number;
-    connections: number;
-  };
-}
+// Componentes de cada sección
+import { UserManagement } from "@/components/admin/UserManagement";
+import { SystemLogs } from "@/components/admin/SystemLogs";
+import { Analytics } from "@/components/admin/Analytics";
 
-export default function AdminPage() {
-  // 2. Aplicación del tipo en el useState
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+type AdminTab = "users" | "logs" | "analytics";
+
+const TABS = [
+  { id: "users" as const, label: "Gestión de Usuarios", icon: Users },
+  { id: "logs" as const, label: "Logs del Sistema", icon: FileText },
+  { id: "analytics" as const, label: "Estadísticas de Uso", icon: BarChart3 },
+];
+
+function AdminContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [user, setUser] = useState<UserResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<AdminTab>("users");
 
   useEffect(() => {
-    api.get("/admin/stats").then((res) => setStats(res.data));
-  }, []);
+    const tab = searchParams.get("tab") as AdminTab;
+    if (tab && TABS.some((t) => t.id === tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
-  if (!stats) return <div className="p-10">Cargando Dashboard...</div>;
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser.role !== "Administrador") {
+          router.push("/dashboard");
+          return;
+        }
+        setUser(currentUser);
+      } catch {
+        router.push("/auth");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadUser();
+  }, [router]);
 
-  const data = [
-    { name: "Usuarios", value: stats.kpis.users },
-    { name: "Traducciones", value: stats.kpis.translations },
-    { name: "Conexiones", value: stats.kpis.connections },
-  ];
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    router.push(`/admin?tab=${tab}`, { scroll: false });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <Loader2 className="spinner" size={40} />
+        <p>Cargando...</p>
+        <style jsx>{`
+          .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 1rem; color: var(--text-secondary); }
+          .spinner { animation: spin 1s linear infinite; }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      <h1 className="text-3xl font-bold">Panel de Administrador</h1>
-
-      {/* KPIS */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Usuarios Totales
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.kpis.users}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Traducciones</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.kpis.translations}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tasa de Error</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {stats.kpis.error_rate}%
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conexiones BD</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.kpis.connections}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* GRÁFICO */}
-      <Card className="col-span-4">
-        <CardHeader>
-          <CardTitle>Resumen de Actividad</CardTitle>
-        </CardHeader>
-        <CardContent className="pl-2">
-          <div className="h-75 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <XAxis
-                  dataKey="name"
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `${value}`}
-                />
-                <Tooltip />
-                <Bar dataKey="value" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+    <div className="admin-page">
+      <Header user={user} />
+      <main className="admin-content">
+        <div className="admin-container">
+          <div className="admin-header">
+            <Link href="/dashboard">
+              <div className="back-link">
+                <ChevronLeft size={20} />
+                <span>Regresar</span>
+              </div>
+            </Link>
+            <h1 className="text-h2">Administración del Sistema</h1>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="admin-layout">
+            <aside className="admin-sidebar">
+              <nav className="admin-nav">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      className={`nav-item ${activeTab === tab.id ? "active" : ""}`}
+                      onClick={() => handleTabChange(tab.id)}
+                    >
+                      <Icon size={18} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </aside>
+
+            <section className="admin-panel">
+              {activeTab === "users" && <UserManagement />}
+              {activeTab === "logs" && <SystemLogs />}
+              {activeTab === "analytics" && <Analytics />}
+            </section>
+          </div>
+        </div>
+      </main>
+
+      <style jsx>{`
+        .admin-page { min-height: 100vh; background-color: var(--bg-secondary); }
+        .admin-content { padding: 2rem 0; }
+        .admin-container { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; }
+        .admin-header { margin-bottom: 2rem; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--text-secondary); text-decoration: none; font-size: var(--text-label); margin-bottom: 0.75rem; transition: color 0.15s ease; }
+        .back-link:hover { color: var(--accent-primary); }
+        .admin-layout { display: grid; grid-template-columns: 260px 1fr; gap: 2rem; }
+        .admin-sidebar { background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 0.75rem; padding: 0.5rem; height: fit-content; position: sticky; top: 80px; }
+        .admin-nav { display: flex; flex-direction: column; gap: 0.25rem; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border: none; background: transparent; border-radius: 0.5rem; font-size: var(--text-label); font-weight: var(--font-medium); color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; text-align: left; width: 100%; }
+        .nav-item:hover { background-color: var(--bg-tertiary); color: var(--text-primary); }
+        .nav-item.active { background-color: var(--purple-500); color: white; }
+        .admin-panel { background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 0.75rem; padding: 1.5rem; min-height: 500px; }
+        @media (max-width: 900px) { .admin-layout { grid-template-columns: 1fr; } .admin-sidebar { position: static; } .admin-nav { flex-direction: row; overflow-x: auto; } .nav-item span { display: none; } }
+      `}</style>
     </div>
   );
 }
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="loading-container">
+        <Loader2 className="spinner" size={40} />
+        <style jsx>{`
+          .loading-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+          .spinner { animation: spin 1s linear infinite; color: var(--accent-primary); }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        `}</style>
+      </div>
+    }>
+      <AdminContent />
+    </Suspense>
+  );
+}
+

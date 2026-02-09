@@ -1,107 +1,167 @@
-from datetime import datetime, timedelta
-from typing import Optional
-from dotenv import load_dotenv
-from jose import jwt
+import secrets
+from datetime import datetime, timedelta, timezone
+
 import bcrypt
-from cryptography.fernet import Fernet
-import os
+from jose import jwt, JWTError
 
-load_dotenv()
-
-# ==================== 1. AUTENTICACIÓN (JWT) ====================
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-if not JWT_SECRET_KEY:
-    raise RuntimeError(
-        "JWT_SECRET_KEY environment variable is not set; refusing to start without a secure signing key."
-    )
-
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 día
+from .config import settings
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Genera un token JWT para autenticación."""
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now() + expires_delta
-    else:
-        expire = datetime.now() + timedelta(minutes=15)
-
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-# ==================== 2. LOGIN (Bcrypt) ====================
-def verify_password(plain_password, hashed_password):
+def hash_password(password: str) -> str:
     """
-    Verifica la contraseña del usuario contra el hash.
+    Hashea una contraseña usando bcrypt.
+
+    Args:
+        password: Contraseña en texto plano.
+
+    Returns:
+        Contraseña hasheada.
+    """
+
+    encoded = password.encode("utf-8")
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(encoded, salt)
+    return hashed.decode("utf-8")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verifica si una contraseña coincide con su hash.
+
+    Args:
+        plain_password: Contraseña en texto plano.
+        hashed_password: Hash de la contraseña almacenada.
+
+    Returns:
+        True si coinciden, False en caso contrario.
     """
     return bcrypt.checkpw(
         plain_password.encode("utf-8"), hashed_password.encode("utf-8")
     )
 
 
-def get_password_hash(password):
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """
-    Hashea la contraseña del usuario para almacenarla en la base de datos.
+    Crea un token JWT de acceso.
+
+    Args:
+        data: Datos a incluir en el payload del token.
+        expires_delta: Tiempo de expiración del token.
+
+    Returns:
+        Token JWT codificado.
     """
-    pwd_bytes = password.encode("utf-8")
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(pwd_bytes, salt)
+    to_encode = data.copy()
 
-    return hashed.decode("utf-8")
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
 
-
-# ==================== 3. CONEXIÓN A BASES DE DATOS (AES-128) ====================
-ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
-if not ENCRYPTION_KEY:
-    raise RuntimeError(
-        "La variable de entorno ENCRYPTION_KEY no ha sido asignada. "
-        "Por favor, configure una clave Fernet segura para encriptar credenciales e bases de datos."
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(
+        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM
     )
 
-cipher_suite = Fernet(ENCRYPTION_KEY)
+    return encoded_jwt
 
 
-def encrypt_credential(raw_password: str) -> str:
+def verify_access_token(token: str) -> dict | None:
     """
-    Se encarga de encriptar la contraseña a la base de datos usando Fernet (AES-128).
+    Verifica y decodifica un token JWT.
+
+    Args:
+        token: Token JWT a verificar.
+
+    Returns:
+        Payload del token si es válido, None en caso contrario.
     """
-    return cipher_suite.encrypt(raw_password.encode()).decode()
+    try:
+        payload = jwt.decode(
+            token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        return payload
+    except JWTError:
+        return None
 
 
-def decrypt_credential(encrypted_password: str) -> str:
+def generate_csrf_token() -> str:
     """
-    Desencripta la contraseña para conectarse a la base de datos
+    Genera un token CSRF seguro.
+
+    Returns:
+        Token CSRF de 32 bytes en formato hexadecimal.
     """
-    return cipher_suite.decrypt(encrypted_password.encode()).decode()
+    return secrets.token_hex(32)
 
 
-# ==================== 4. RECUPERACIÓN DE CONTRASEÑA ====================
-RESET_TOKEN_EXPIRE_MINUTES = 30
+def create_csrf_token(session_id: str) -> str:
+    """
+    Crea un token CSRF vinculado a una sesión (double-submit pattern).
+
+    Args:
+        session_id: ID de la sesión del usuario (user_id del JWT).
+
+    Returns:
+        Token CSRF firmado.
+    """
+    token_data = {
+        "session_id": session_id,
+        "csrf": secrets.token_hex(16),
+        "exp": datetime.now(timezone.utc)
+        + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    }
+    return jwt.encode(
+        token_data, settings.CSRF_SECRET_KEY, algorithm=settings.ALGORITHM
+    )
 
 
-def create_password_reset_token(email: str):
-    """Genera un token específico para recuperar contraseña."""
-    delta = timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
-    now = datetime.now()
-    expires = now + delta
+def verify_csrf_token(csrf_token: str, session_id: str) -> bool:
+    """
+    Verifica que el token CSRF sea válido y pertenezca a la sesión.
+
+    Args:
+        csrf_token: Token CSRF a verificar.
+        session_id: ID de la sesión del usuario.
+
+    Returns:
+        True si el token es válido, False en caso contrario.
+    """
+    try:
+        payload = jwt.decode(
+            csrf_token, settings.CSRF_SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        return payload.get("session_id") == session_id
+    except JWTError:
+        return False
+
+
+def create_password_reset_token(email: str) -> str:
+    expires_delta = timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + expires_delta
+    # El 'scope' evita que este token se use para iniciar sesión
+    to_encode = {"exp": expire, "sub": email, "scope": "password_reset"}
     encoded_jwt = jwt.encode(
-        {"sub": email, "exp": expires, "type": "reset"},
-        JWT_SECRET_KEY,
-        algorithm=ALGORITHM,
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
     return encoded_jwt
 
 
-def verify_reset_token(token: str) -> Optional[str]:
-    """Decodifica y valida el token de recuperación."""
+def verify_password_reset_token(token: str) -> str | None:
+    """
+    Decodifica el token y extrae el email si es válido y tiene el scope correcto.
+    Retorna el email o None si falló la validación.
+    """
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("type") != "reset":
-            return None
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         email: str = payload.get("sub")
+        scope: str = payload.get("scope")
+
+        if email is None or scope != "password_reset":
+            return None
+
         return email
-    except jwt.JWTError:
+    except JWTError:
         return None

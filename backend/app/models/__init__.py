@@ -1,5 +1,5 @@
 from .user import User
-from .db_connection import DbConnection
-from .translation import Translation
+from .connection import Connection
+from .query_history import QueryHistory
 
-__all__ = ["User", "DbConnection", "Translation"]
+__all__ = ["User", "Connection", "QueryHistory"]

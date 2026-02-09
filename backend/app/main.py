@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.router import auth, connections, translator, execution, admin, users
-
 from dotenv import load_dotenv
+
+from .api.auth_router import router as auth_router
+from .api.user_router import router as user_router
+from .api.admin_router import router as admin_router
+from .api.connection_router import router as connection_router
+from .api.translator_router import router as translator_router
+from .api.execution_router import router as execution_router
+from .core.config import settings
 
 load_dotenv()
 
@@ -13,30 +19,40 @@ app = FastAPI(
 )
 
 # Configuración del CORS
+# En desarrollo usamos localhost, en producción usar el dominio real
 origins = [
     "http://localhost:3000",
-    "http://localhost",
+    "http://127.0.0.1:3000",
+    settings.FRONTEND_URL,
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=True,  # Importante para cookies
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-CSRF-Token",  # Header para el token CSRF
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+    ],
+    expose_headers=["X-CSRF-Token"],
 )
 
 # Agregar enrutadores
-app.include_router(auth.router, prefix="/api/auth")
-app.include_router(connections.router, prefix="/api/connections")
-app.include_router(translator.router, prefix="/api/translate")
-app.include_router(execution.router, prefix="/api/execute")
-app.include_router(admin.router, prefix="/api/admin")
-app.include_router(users.router, prefix="/api/users")
+app.include_router(auth_router)
+app.include_router(user_router)
+app.include_router(admin_router)
+app.include_router(connection_router)
+app.include_router(translator_router)
+app.include_router(execution_router)
 
 
 @app.get("/")
-def read_root():
+def health_check():
     return {
         "status": "ok",
         "message": "Middleware operativo",
