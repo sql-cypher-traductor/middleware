@@ -12,6 +12,16 @@ supabase
 # Utilidades
 python-dotenv
 
+# Validadores de datos
+pydantic[email]
+
+# Seguridad
+bcrypt
+python-jose[cryptography]
+
+# Correo electrónico
+resend
+
 # Linters y formateadores
 black
 ruff

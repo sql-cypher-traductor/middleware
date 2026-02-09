@@ -4,32 +4,32 @@
 
 ### 🛠️ Backend (FastAPI + Alembic + Supabase)
 1. [x] **Modelo de Datos:** Crear tabla `users` vía Alembic con campos: `id` (UUID), `email` (unique), `password_hash`, `first_name`, `last_name`, `role` (default: 'developer'), `is_active` (bool).
-2. **Endpoint Registro:** `POST /auth/register`. Validar que el email no exista, hashear contraseña con **Bcrypt** y guardar.
-3. **Endpoint Login:** `POST /auth/login`. Validar credenciales y retornar un **JWT (JSON Web Token)**.
+2. [x] **Endpoint Registro:** `POST /auth/register`. Validar que el email no exista, hashear contraseña con **Bcrypt** y guardar.
+3. [x] **Endpoint Login:** `POST /auth/login`. Validar credenciales y retornar un **JWT (JSON Web Token)**.
 4. **Seguridad:** Implementar un middleware de *Rate Limiting* (puedes usar `slowapi`) para limitar a **5 intentos fallidos cada 10 minutos**, usando como clave la **combinación de IP + email** y bloqueando nuevos intentos durante **15 minutos** cuando se supere el límite (responder con un error estándar de demasiados intentos).
 
 ### 🎨 Frontend (Next.js)
-1. **Estructura:** Layout de autenticación con un *toggle* para cambiar entre formularios.
-2. **Validación:** Uso de **Zod** para el esquema de validación (regex para email y fortaleza de contraseña).
-3. **Estado:** Almacenar el JWT en una *HttpOnly Cookie* marcada también como `Secure` y con política `SameSite` (`Lax` o `Strict` según el flujo de autenticación). Para endpoints mutables (ej. `POST`, `PATCH`, `DELETE`), implementar una estrategia anti-CSRF explícita (por ejemplo, token CSRF enviado por header o esquema de *double-submit token*).
+1. [x] **Estructura:** Layout de autenticación con un *toggle* para cambiar entre formularios.
+2. [x] **Validación:** Uso de **Zod** para el esquema de validación (regex para email y fortaleza de contraseña).
+3. [x] **Estado:** Almacenar el JWT en una *HttpOnly Cookie* marcada también como `Secure` y con política `SameSite` (`Lax` o `Strict` según el flujo de autenticación). Para endpoints mutables (ej. `POST`, `PATCH`, `DELETE`), implementar una estrategia anti-CSRF explícita (por ejemplo, token CSRF enviado por header o esquema de *double-submit token*).
 4. **UX:**
-   1. Botón con estado `loading` usando un spinner de Lucide React.
-   2. `show/hide password` con un componente de input reutilizable.
+   1. [x] Botón con estado `loading` usando un spinner de Lucide React.
+   2. [x] `show/hide password` con un componente de input reutilizable.
 
 ---
 
 ## AUM-02: Actualización del Perfil
 
 ### 🛠️ Backend
-1. **Endpoint:** `PATCH /users/me`. Debe ser una ruta protegida que extraiga el `user_id` del token.
-2. **Lógica de Contraseña:** Si el payload incluye `new_password`, requerir `current_password`. Validar el hash actual antes de permitir el cambio.
-3. **Validación:** No permitir que el usuario cambie su propio `role` ni su `email` desde este endpoint (eso va por AUM-04 o un proceso de verificación).
+1. [x] **Endpoint:** `PATCH /users/me`. Debe ser una ruta protegida que extraiga el `user_id` del token.
+2. [x] **Lógica de Contraseña:** Si el payload incluye `new_password`, requerir `current_password`. Validar el hash actual antes de permitir el cambio.
+3. [x] **Validación:** No permitir que el usuario cambie su propio `role` ni su `email` desde este endpoint (eso va por AUM-04 o un proceso de verificación).
 
 ### 🎨 Frontend
-1. **Formulario:** Campos pre-rellenados con los datos actuales del usuario (obtenidos de un `GET /users/me`).
-2. **UX:** Validación *inline* mientras el usuario escribe.
-   1. Toast de notificación (puedes usar `sonner`) al guardar con éxito.
-   2. Sección de "Seguridad" separada para el cambio de contraseña.
+1. [x] **Formulario:** Campos pre-rellenados con los datos actuales del usuario (obtenidos de un `GET /users/me`).
+2. [x] **UX:** Validación *inline* mientras el usuario escribe.
+   1. [x] Toast de notificación (puedes usar `sonner`) al guardar con éxito.
+   2. [x] Sección de "Seguridad" separada para el cambio de contraseña.
 
 ---
 
