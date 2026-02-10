@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response, status, HTTPException
+from fastapi import APIRouter, Depends, Response, status, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from ..core.cookies import set_auth_cookies, clear_auth_cookies
@@ -9,6 +9,7 @@ from ..core.security import (
     verify_password_reset_token,
     hash_password,
 )
+from ..core.audit import AuditLogger
 from ..db.database import get_db
 from ..dto.user_dto import (
     UserCreateDTO,
@@ -32,7 +33,11 @@ router = APIRouter(prefix="/api/auth", tags=["Autenticación"])
     summary="Registrar un nuevo usuario",
     description="Crea un nuevo usuario en el sistema. Valida que el email sea único.",
 )
-def register(user_data: UserCreateDTO, db: Session = Depends(get_db)):
+def register(
+    user_data: UserCreateDTO,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     """
     Endpoint para registrar un nuevo usuario.
 
@@ -43,6 +48,17 @@ def register(user_data: UserCreateDTO, db: Session = Depends(get_db)):
     """
     auth_service = AuthService(db)
     user = auth_service.register(user_data)
+
+    # Registrar log
+    AuditLogger.info(
+        db=db,
+        action=AuditLogger.Actions.REGISTER,
+        message=f"Nuevo usuario registrado: {user.email}",
+        user_id=user.user_id,
+        resource=f"User:{user.user_id}",
+        request=request,
+    )
+
     return user
 
 
@@ -55,6 +71,7 @@ def register(user_data: UserCreateDTO, db: Session = Depends(get_db)):
 )
 def login(
     login_data: LoginDTO,
+    request: Request,
     response: Response,
     db: Session = Depends(get_db),
 ):
@@ -68,7 +85,19 @@ def login(
     El token CSRF debe ser enviado en el header X-CSRF-Token para operaciones mutables.
     """
     auth_service = AuthService(db)
-    auth_result = auth_service.login(login_data)
+
+    try:
+        auth_result = auth_service.login(login_data)
+    except HTTPException:
+        # Registrar intento fallido
+        AuditLogger.warning(
+            db=db,
+            action=AuditLogger.Actions.LOGIN_FAILED,
+            message=f"Intento de login fallido para: {login_data.email}",
+            details={"email": str(login_data.email)},
+            request=request,
+        )
+        raise
 
     # Crear token CSRF vinculado a la sesión del usuario
     csrf_token = create_csrf_token(str(auth_result.user.user_id))
@@ -78,6 +107,15 @@ def login(
         response=response,
         access_token=auth_result.access_token,
         csrf_token=csrf_token,
+    )
+
+    # Registrar login exitoso
+    AuditLogger.info(
+        db=db,
+        action=AuditLogger.Actions.LOGIN,
+        message=f"Usuario inició sesión: {auth_result.user.email}",
+        user_id=auth_result.user.user_id,
+        request=request,
     )
 
     return LoginResponseDTO(
@@ -94,11 +132,24 @@ def login(
 )
 def logout(
     response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = None,
 ):
     """
     Endpoint para cerrar sesión.
     Elimina las cookies de autenticación del navegador.
     """
+    # Registrar logout si hay usuario
+    if current_user:
+        AuditLogger.info(
+            db=db,
+            action=AuditLogger.Actions.LOGOUT,
+            message=f"Usuario cerró sesión: {current_user.email}",
+            user_id=current_user.user_id,
+            request=request,
+        )
+
     clear_auth_cookies(response)
     return {"message": "Sesión cerrada exitosamente"}
 
