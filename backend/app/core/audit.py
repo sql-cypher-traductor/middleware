@@ -2,8 +2,7 @@
 Decorador y utilidades para logging automático de acciones.
 """
 
-from functools import wraps
-from typing import Optional, Callable, Any
+from typing import Optional
 from uuid import UUID
 
 from fastapi import Request

@@ -88,7 +88,7 @@ def login(
 
     try:
         auth_result = auth_service.login(login_data)
-    except HTTPException as e:
+    except HTTPException:
         # Registrar intento fallido
         AuditLogger.warning(
             db=db,

@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, case
 
 from ..dto.log_dto import (
-    LogCreateDTO,
     LogReadDTO,
     LogListResponseDTO,
     LogCountByLevelDTO,
@@ -563,7 +562,7 @@ class LogService:
             import ast
 
             return ast.literal_eval(data_str)
-        except:
+        except RuntimeError:
             return {"masked_data": data_str}
 
     def _get_client_ip(self, request: Request) -> str:

@@ -6,10 +6,9 @@ from datetime import datetime, timedelta
 from uuid import UUID
 from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, desc, func, case
+from sqlalchemy import and_, desc, func
 
 from ..models.log import Log
-from ..models.user import User
 
 
 class LogRepository:
