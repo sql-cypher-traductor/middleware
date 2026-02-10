@@ -2,10 +2,11 @@
 Router para endpoints de traducción SQL a Cypher.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from ..core.dependencies import get_current_user_from_cookie
+from ..core.audit import AuditLogger
 from ..db.database import get_db
 from ..dto.translator_dto import TranslationRequestDTO, TranslationResponseDTO
 from ..models.user import User
@@ -29,7 +30,8 @@ router = APIRouter(
     "Soporta sentencias SELECT, INSERT, UPDATE y DELETE.",
 )
 async def translate_sql_to_cypher(
-    request: TranslationRequestDTO,
+    translation_request: TranslationRequestDTO,
+    request: Request,
     current_user: User = Depends(get_current_user_from_cookie),
     db: Session = Depends(get_db),
 ) -> TranslationResponseDTO:
@@ -47,20 +49,31 @@ async def translate_sql_to_cypher(
     # Crear registro en historial
     query_history = QueryHistory(
         user_id=current_user.user_id,
-        sql_query=request.sql,
+        sql_query=translation_request.sql,
         query_status=QueryStatus.PENDING,
     )
     query_history = query_history_repo.create(query_history)
 
     try:
         # Realizar la traducción
-        result = service.translate(request)
+        result = service.translate(translation_request)
 
         # Actualizar historial con éxito
         query_history.cypher_query = result.cypher
         query_history.translation_time = result.translation_time
         query_history.query_status = QueryStatus.TRANSLATED
         query_history_repo.update(query_history)
+
+        # Registrar log de éxito
+        AuditLogger.info(
+            db=db,
+            action=AuditLogger.Actions.SQL_TRANSLATION,
+            message=f"Traducción exitosa: {result.statement_type}",
+            user_id=current_user.user_id,
+            resource=f"QueryHistory:{query_history.query_id}",
+            details={"translation_time_ms": result.translation_time * 1000},
+            request=request,
+        )
 
         return result
 
@@ -70,4 +83,16 @@ async def translate_sql_to_cypher(
         query_history.failure_stage = FailureStage.TRANSLATION
         query_history.error_message = str(e)
         query_history_repo.update(query_history)
+
+        # Registrar log de error
+        AuditLogger.error(
+            db=db,
+            action=AuditLogger.Actions.SQL_TRANSLATION_FAILED,
+            message=f"Error en traducción: {str(e)[:100]}",
+            user_id=current_user.user_id,
+            resource=f"QueryHistory:{query_history.query_id}",
+            details={"error": str(e), "sql_preview": translation_request.sql[:200]},
+            request=request,
+        )
+
         raise
