@@ -349,7 +349,9 @@ class LogService:
         Returns:
             Estadísticas de uso del sistema.
         """
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start = datetime.utcnow().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
         week_start = today_start - timedelta(days=7)
         start_date = datetime.utcnow() - timedelta(days=days)
 
@@ -357,37 +359,31 @@ class LogService:
         total_users = (
             self.db.query(func.count(User.user_id))
             .filter(User.deleted_at.is_(None))
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         active_users = (
             self.db.query(func.count(User.user_id))
             .filter(and_(User.deleted_at.is_(None), User.is_active.is_(True)))
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         # Usuarios que iniciaron sesión hoy (basado en last_login)
         users_logged_in_today = (
             self.db.query(func.count(User.user_id))
-            .filter(
-                and_(
-                    User.deleted_at.is_(None),
-                    User.last_login >= today_start
-                )
-            )
-            .scalar() or 0
+            .filter(and_(User.deleted_at.is_(None), User.last_login >= today_start))
+            .scalar()
+            or 0
         )
 
         # Usuarios nuevos esta semana
         new_users_this_week = (
             self.db.query(func.count(User.user_id))
-            .filter(
-                and_(
-                    User.deleted_at.is_(None),
-                    User.created_at >= week_start
-                )
-            )
-            .scalar() or 0
+            .filter(and_(User.deleted_at.is_(None), User.created_at >= week_start))
+            .scalar()
+            or 0
         )
 
         # ==================== Estadísticas de Consultas ====================
@@ -396,31 +392,36 @@ class LogService:
         queries_today = (
             self.db.query(func.count(QueryHistory.query_id))
             .filter(QueryHistory.created_at >= today_start)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         queries_this_week = (
             self.db.query(func.count(QueryHistory.query_id))
             .filter(QueryHistory.created_at >= week_start)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         translated_queries = (
             self.db.query(func.count(QueryHistory.query_id))
             .filter(QueryHistory.query_status == QueryStatus.TRANSLATED)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         executed_queries = (
             self.db.query(func.count(QueryHistory.query_id))
             .filter(QueryHistory.query_status == QueryStatus.EXECUTED)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         failed_queries = (
             self.db.query(func.count(QueryHistory.query_id))
             .filter(QueryHistory.query_status == QueryStatus.FAILED)
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         successful = translated_queries + executed_queries
@@ -441,14 +442,14 @@ class LogService:
 
         # ==================== Estadísticas de Conexiones ====================
         total_connections = (
-            self.db.query(func.count(Connection.connection_id))
-            .scalar() or 0
+            self.db.query(func.count(Connection.connection_id)).scalar() or 0
         )
 
         active_connections = (
             self.db.query(func.count(Connection.connection_id))
             .filter(Connection.is_active.is_(True))
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
         # ==================== Consultas por día ====================
@@ -457,10 +458,15 @@ class LogService:
                 func.date(QueryHistory.created_at).label("date"),
                 func.count(QueryHistory.query_id).label("total"),
                 func.sum(
-                    case((QueryHistory.query_status == QueryStatus.TRANSLATED, 1), else_=0)
+                    case(
+                        (QueryHistory.query_status == QueryStatus.TRANSLATED, 1),
+                        else_=0,
+                    )
                 ).label("translated"),
                 func.sum(
-                    case((QueryHistory.query_status == QueryStatus.EXECUTED, 1), else_=0)
+                    case(
+                        (QueryHistory.query_status == QueryStatus.EXECUTED, 1), else_=0
+                    )
                 ).label("executed"),
                 func.sum(
                     case((QueryHistory.query_status == QueryStatus.FAILED, 1), else_=0)
@@ -485,10 +491,10 @@ class LogService:
 
         # ==================== Distribución por estado ====================
         status_colors = {
-            "Traducida": "#3b82f6",   # Azul
-            "Ejecutada": "#22c55e",   # Verde
-            "Fallida": "#ef4444",     # Rojo
-            "Pendiente": "#f59e0b",   # Amarillo
+            "Traducida": "#3b82f6",  # Azul
+            "Ejecutada": "#22c55e",  # Verde
+            "Fallida": "#ef4444",  # Rojo
+            "Pendiente": "#f59e0b",  # Amarillo
         }
 
         query_status_distribution = [
@@ -522,8 +528,12 @@ class LogService:
             executed_queries=executed_queries,
             failed_queries=failed_queries,
             success_rate=round(success_rate, 2),
-            avg_translation_time_ms=round(avg_translation * 1000, 2) if avg_translation else None,
-            avg_execution_time_ms=round(avg_execution * 1000, 2) if avg_execution else None,
+            avg_translation_time_ms=(
+                round(avg_translation * 1000, 2) if avg_translation else None
+            ),
+            avg_execution_time_ms=(
+                round(avg_execution * 1000, 2) if avg_execution else None
+            ),
             total_connections=total_connections,
             active_connections=active_connections,
         )

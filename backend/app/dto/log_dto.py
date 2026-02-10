@@ -69,8 +69,10 @@ class SystemStatsDTO(BaseModel):
 
 # ==================== DTOs para Estadísticas de Uso ====================
 
+
 class QueryCountByDayDTO(BaseModel):
     """Conteo de consultas por día."""
+
     date: date
     total: int
     translated: int
@@ -80,6 +82,7 @@ class QueryCountByDayDTO(BaseModel):
 
 class QueryStatusDistributionDTO(BaseModel):
     """Distribución de consultas por estado."""
+
     status: str
     count: int
     color: str
@@ -87,6 +90,7 @@ class QueryStatusDistributionDTO(BaseModel):
 
 class UsageStatsDTO(BaseModel):
     """Estadísticas de uso del sistema (sin basarse en logs)."""
+
     # Usuarios
     total_users: int
     active_users: int
@@ -113,6 +117,7 @@ class UsageStatsDTO(BaseModel):
 
 class UsageStatsResponseDTO(BaseModel):
     """Respuesta completa de estadísticas de uso."""
+
     stats: UsageStatsDTO
     queries_by_day: list[QueryCountByDayDTO]
     query_status_distribution: list[QueryStatusDistributionDTO]
