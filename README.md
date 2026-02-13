@@ -1,111 +1,174 @@
-# Planificación de Sprints
+# Middleware SQL → Cypher
 
-## 🏁 Sprint 0: Cimientos y Definiciones
-**Objetivo:** Tener el entorno listo para codificar de forma fluida y sin bloqueos técnicos.
+Middleware de traducción SQL a Cypher encargado de ejecutar consultas en Neo4j y visualizar resultados (tabla, JSON y grafo). Cuenta con un historial de consultas por usuarios que permite reutilizar sentencias traducidas o ejecutadas anteriormente.
 
-### Arquitectura & Configuración:
-- [x] Inicializar el Monorepo (Git).
-- [x] Configurar Docker Compose: Orquestar FastAPI (Backend), Next.js (Frontend) y PostgreSQL (DB Sistema).
-- [x] Configurar Linter/Formatter (ESLint, Prettier, Black, Ruff) para mantener el código limpio automáticamente.
+## Stack actual
 
-### UI/UX (Prototipado):
-- [ ] Diseñar en baja fidelidad (Wireframe) la pantalla del "Traductor IDE" (3 paneles).
-- [ ] Definir la paleta de colores y componentes base en Shadcn/UI dentro de Next.js.
+- Backend: FastAPI + SQLAlchemy + Alembic + sqlglot
+- Frontend: Next.js 16 + TypeScript + Monaco Editor + Sonner + React Force Graph
+- Base de datos del sistema: PostgreSQL
+- Auth: JWT + cookies + CSRF
 
-### Investigación (Spike):
-- [x] Prueba de concepto pequeña con sqlglot: Script simple de Python que traduzca un SELECT básico a Cypher.
+## Requisitos
 
-**Entregable:** Un repositorio que levanta con docker-compose up mostrando un "Hola Mundo" en Next.js conectado a la API de FastAPI.
+- Python 3.11+
+- Node.js 20+
+- pnpm 9+
+- PostgreSQL (local o Supabase)
+
+## Estructura
+
+- `backend/`: API FastAPI, validación/traducción SQL, ejecución y persistencia
+- `frontend/`: aplicación web (auth, dashboard, traductor, historial, admin)
+- `.env.example`: plantilla de variables para backend/frontend
+
+## 1) Configurar variables de entorno
+
+Desde la raíz del repositorio:
+
+```bash
+cp .env.example .env
+```
+
+En Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edita `.env` con tus valores reales.
+
+### Variables mínimas para desarrollo local
+
+- Base de datos:
+  - `DB_USER`
+  - `DB_PASSWORD`
+  - `DB_HOST`
+  - `DB_PORT`
+  - `DB_NAME`
+- Seguridad:
+  - `JWT_SECRET_KEY`
+  - `CSRF_SECRET_KEY`
+  - `ENCRYPTION_KEY`
+- CORS/URLs:
+  - `FRONTEND_URL=http://localhost:3000`
+  - `BACKEND_URL=http://localhost:8000`
+
+
+## 2) Backend
+
+### Instalar dependencias
+
+```bash
+cd backend
+python -m venv .venv
+```
+
+Activar entorno virtual:
+
+- Windows:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+- macOS/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+Instalar paquetes:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Migraciones
+
+Con `.env` ya configurado:
+
+```bash
+alembic upgrade head
+```
+
+### Ejecutar backend
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Health check:
+
+- `GET http://localhost:8000/`
+
+## 3) Frontend
+
+```bash
+cd frontend
+pnpm install
+pnpm dev
+```
+
+Abre:
+
+- `http://localhost:3000`
+
+Build de verificación:
+
+```bash
+pnpm build
+```
+
+## 4) Flujo de uso del sistema
+
+1. Levantar backend (`:8000`) y frontend (`:3000`)
+2. Registrar/iniciar sesión
+3. Configurar conexión(es) desde el módulo de conexiones
+4. Ir al traductor:
+   - Escribir SQL
+   - Traducir a Cypher
+   - Traducir y ejecutar sobre Neo4j
+5. Revisar resultados:
+   - Tabla
+   - JSON
+   - Grafo
+6. Consultar historial y detalles de ejecución
+
+## 5) Comportamiento actual del traductor
+
+- Soporta `SELECT`, `INSERT`, `UPDATE`, `DELETE`
+- Maneja errores de sintaxis/estructura con mensajes descriptivos
+- Detecta casos inválidos frecuentes (por ejemplo: `SELECT` sin `FROM`, `UPDATE` sin `SET`, mismatch columnas/valores en `INSERT`)
+- Los errores y advertencias se visualizan en forma de notificación.
+
+## 6) Endpoints principales
+
+- Traducción:
+  - `POST /translator/translate`
+- Traducción + ejecución:
+  - `POST /execution/translate-and-execute`
+- Ejecución Cypher directa:
+  - `POST /execution/cypher`
+- Historial:
+  - `GET /execution/history`
+
+## 7) Verificación de Calidad para aprobar el pipeline ci.yaml
+
+Backend:
+
+```bash
+cd backend
+ruff check .
+black .
+```
+
+Frontend:
+
+```bash
+cd frontend
+pnpm lint
+pnpm build
+```
 
 ---
-
-## 🏃 Sprint 1: Motor de Traducción
-**Objetivo:** Lograr que el sistema traduzca texto SQL a texto Cypher (sin interfaz gráfica compleja aún).
-
-### Backend (Python):
-- [x] Crear el servicio ```TranslatorService``` con ```sqlglot```.
-- [x] Implementar traducción de cláusulas básicas: ```SELECT```, ```FROM```, ```WHERE```.
-- [x] Implementar traducción de relaciones: ```JOIN``` $\rightarrow$ ```MATCH```.
-- [x] Manejo de errores de parsing (Sintaxis SQL inválida).
-
-### API:
-- [x] Endpoint POST /api/translate: Recibe string SQL, devuelve string Cypher.
-
-**Entregable:** Una API funcional que puedes probar con Postman/Swagger. Le envías un SQL y te responde con Cypher válido.
-
----
-
-## 🏃 Sprint 2: Seguridad y "La Bóveda" (Gestión de Usuarios)
-**Objetivo:** Que cada usuario tenga su espacio seguro y pueda guardar sus conexiones.
-
-### Backend (Seguridad):
-- [x] Implementar Modelos de BD (User, DBConnection) en PostgreSQL con SQLAlchemy.
-- [x] Sistema de Auth (JWT): Login, Registro, Recuperar Contraseña.
-- [x] Cifrado: Implementar servicio para encriptar/desencriptar contraseñas de conexiones (AES-128).
-
-### Frontend (Next.js):
-- [x] Páginas de Login y Registro.
-- [x] Modal de "Gestión de Conexiones" (CRUD de credenciales).
-- [x] Botón "Test Connection" (conectar API con drivers reales de SQL/Neo4j).
-
-**Entregable:** Sistema de Login funcional y capacidad de guardar una conexión a Neo4j/SQL Server de forma encriptada.
-
----
-
-## 🏃 Sprint 3: El IDE del Desarrollador (Integración UI)
-**Objetivo:** Unir el motor del Sprint 1 con la seguridad del Sprint 2 en una interfaz usable.
-
-### Frontend (DX):
-- [x] Implementar Monaco Editor en Next.js (uno para SQL, uno para Cypher - ReadOnly).
-- [x] Integrar el endpoint de traducción al botón "Traducir".
-- [x] Panel de Historial de Consultas (Sidebar).
-
-### Backend:
-- [x] Guardar historial de traducciones por usuario.
-
-**Entregable:** La "Homepage" funciona. Escribes código en la web, das clic y aparece la traducción.
-
----
-
-## 🏃 Sprint 4: Ejecución y Visualización (El "Wow")
-**Objetivo:** No solo traducir texto, sino ejecutarlo y ver el grafo.
-
-### Backend (Drivers):
-- [x] Servicio de Ejecución en Neo4j: Recibe Cypher $\rightarrow$ Conecta $\rightarrow$ Ejecuta $\rightarrow$ Retorna JSON.
-- [x] Implementar Timeout y manejo de errores de ejecución (ej. "Database offline").
-
-### Frontend (Viz):
-- [x] Implementar visualizador de grafos (react-force-graph).
-- [x] Pestañas de resultados: Vista JSON, Vista Tabla, Vista Grafo.
-
-**Entregable:** El usuario puede ver sus nodos y relaciones bailando en la pantalla después de ejecutar una consulta.
-
----
-
-## 🏃 Sprint 5: Inteligencia de Esquema y Admin (Valor Agregado)
-**Objetivo:** Hacer el traductor "inteligente" leyendo la base de datos origen y dar control al admin.
-
-### Funcionalidad (Introspección):
-- [ ] Backend: Query para leer sys.tables (SQL Server).
-- [ ] Frontend: Sidebar "Explorador de Esquema" (Drag & drop de tablas al editor).
-
-### Panel de Administrador:
-- [ ] Dashboard de KPIs: Gráficos de # Usuarios, Tasa de Errores.
-- [ ] Logs de auditoría visuales.
-
-**Entregable:** Un panel lateral que muestra las tablas de tu SQL Server y un Dashboard para ti como dueño.
-
----
-
-## 🏁 Sprint 6: Pulido, Feedback y Despliegue (Release Candidate)
-**Objetivo:** Dejar el sistema listo para producción. Cero errores críticos.
-
-### Calidad:
-- [ ] Refinamiento de UX: Loading spinners, mensajes de error amigables (Toasts).
-- [ ] Testing E2E (End-to-End) de flujos críticos.
-
-### DevOps:
-- [ ] Optimización de imágenes Docker (Multi-stage build) para reducir tamaño.
-- [ ] Documentación final de usuario (un pequeño Tour guiado en la app).
-
-**Entregable:** Versión 1.0 lista para desplegar en un servidor.
