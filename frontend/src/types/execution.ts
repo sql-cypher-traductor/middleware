@@ -78,6 +78,7 @@ export interface TranslationResponse {
   cypher: string;
   statement_type: string;
   translation_time: number;
+  warnings: string[];
 }
 
 // Historial de consulta

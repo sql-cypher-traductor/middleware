@@ -152,7 +152,7 @@ export default function ForgotPasswordPage() {
         .forgot-password-container {
           width: 100%;
           max-width: 420px;
-          background-color: var(--bg-secondary);
+          background-color: var(--bg-primary);
           border: 1px solid var(--border-primary);
           border-radius: 1rem;
           padding: 2.5rem;

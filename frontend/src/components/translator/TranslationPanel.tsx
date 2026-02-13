@@ -54,11 +54,27 @@ export function TranslationPanel({
             setCypherQuery(result.cypher);
             setTranslationTime(result.translation_time);
             setStatementType(result.statement_type);
+
+            // Mostrar advertencias si existen
+            if (result.warnings && result.warnings.length > 0) {
+                result.warnings.forEach((warning: string) => {
+                    toast.warning(warning, { duration: 5000 });
+                });
+            }
+
             toast.success("Traducción exitosa");
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Error al traducir";
-            toast.error(message);
-            setCypherQuery(`-- Error: ${message}`);
+            // Mostrar errores SOLO como toast, no en el área de Cypher
+            if (error && typeof error === "object" && "suggestion" in error) {
+                const apiError = error as { message: string; suggestion?: string };
+                toast.error(apiError.message, apiError.suggestion ? {
+                    description: `💡 ${apiError.suggestion}`,
+                    duration: 6000,
+                } : undefined);
+            } else {
+                const message = error instanceof Error ? error.message : "Error al traducir";
+                toast.error(message);
+            }
         } finally {
             setIsTranslating(false);
         }
@@ -95,18 +111,14 @@ export function TranslationPanel({
         toast.success("Consulta ejecutada exitosamente");
         onExecutionResult?.(result);
       } else if (result.status === "Fallida") {
-        // Mostrar error con más detalle
+        // Mostrar error como toast, no en el área de Cypher
         const errorMsg = result.error_message || "Error en la ejecución";
         toast.error(errorMsg, { duration: 6000 });
 
-        // Construir comentario descriptivo
-        let errorComment = "";
+        // Si hay consulta Cypher traducida, mostrarla (es útil para debugging)
         if (result.cypher_query) {
-          errorComment = `${result.cypher_query}\n\n`;
+          setCypherQuery(result.cypher_query);
         }
-        errorComment += `-- ❌ ERROR: ${errorMsg}`;
-
-        setCypherQuery(errorComment);
         onExecutionResult?.(result);
       }
 
@@ -114,9 +126,9 @@ export function TranslationPanel({
         setTranslationTime(result.statistics.execution_time);
       }
     } catch (error) {
-      // Manejar errores estructurados del validador SQL
+      // Mostrar errores SOLO como toast, no en el área de Cypher
       let errorMessage = "Error al ejecutar";
-      let errorComment = "";
+      let suggestion: string | undefined;
 
       if (error && typeof error === "object") {
         const apiError = error as {
@@ -131,31 +143,13 @@ export function TranslationPanel({
         } else if (apiError.message) {
           errorMessage = apiError.message;
         }
-
-        // Construir comentario de error para el editor
-        errorComment = `-- ❌ ERROR: ${errorMessage}`;
-        if (apiError.errorType) {
-          errorComment += `\n-- Tipo: ${apiError.errorType}`;
-        }
-        if (apiError.suggestion) {
-          errorComment += `\n-- 💡 Sugerencia: ${apiError.suggestion}`;
-        }
-
-        // Mostrar toast con mensaje y sugerencia
-        if (apiError.suggestion) {
-          toast.error(errorMessage, {
-            description: apiError.suggestion,
-            duration: 6000,
-          });
-        } else {
-          toast.error(errorMessage);
-        }
-      } else {
-        errorComment = `-- ❌ ERROR: ${errorMessage}`;
-        toast.error(errorMessage);
+        suggestion = apiError.suggestion;
       }
 
-      setCypherQuery(errorComment);
+      toast.error(errorMessage, suggestion ? {
+        description: `💡 ${suggestion}`,
+        duration: 6000,
+      } : undefined);
     } finally {
       setIsExecuting(false);
     }

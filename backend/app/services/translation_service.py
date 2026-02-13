@@ -39,8 +39,12 @@ class TranslationService:
         "TRIM": "trim",
         "COALESCE": "coalesce",
         "NOW": "datetime",
+        "GETDATE": "datetime",
         "CURRENT_TIMESTAMP": "datetime",
         "CURRENT_DATE": "date",
+        "ISNULL": "coalesce",
+        "LEN": "size",
+        "CHARINDEX": "apoc.text.indexOf",
     }
 
     # Mapeo de operadores SQL a Cypher
@@ -71,7 +75,7 @@ class TranslationService:
         Raises:
             HTTPException: Si hay error de sintaxis o sentencia no soportada.
         """
-        from .sql_validator import validate_sql
+        from .sql_validator import validate_sql, get_sql_warnings
 
         start_time = time.perf_counter()
 
@@ -96,8 +100,11 @@ class TranslationService:
             )
 
         try:
-            # Parsear SQL a AST usando sqlglot
-            parsed = sqlglot.parse_one(sql_query)
+            # Parsear SQL a AST usando sqlglot (con fallback a T-SQL)
+            try:
+                parsed = sqlglot.parse_one(sql_query)
+            except ParseError:
+                parsed = sqlglot.parse_one(sql_query, read="tsql")
         except ParseError as e:
             # Si llegamos aquí, el validador no detectó el error
             # Intentar dar un mensaje más descriptivo
@@ -129,11 +136,15 @@ class TranslationService:
         end_time = time.perf_counter()
         translation_time = round(end_time - start_time, 6)
 
+        # Obtener advertencias para operaciones potencialmente peligrosas
+        warnings = get_sql_warnings(sql_query)
+
         return TranslationResponseDTO(
             sql=sql_query,
             cypher=cypher_query,
             statement_type=statement_type,
             translation_time=translation_time,
+            warnings=warnings,
         )
 
     def _validate_sql_basic(self, sql: str) -> None:
@@ -242,10 +253,16 @@ class TranslationService:
         )
         cypher_parts.append(return_clause)
 
+        # Recopilar aliases del SELECT para usar en ORDER BY
+        select_aliases = set()
+        for expr in select.expressions:
+            if isinstance(expr, exp.Alias):
+                select_aliases.add(expr.alias)
+
         # Procesar ORDER BY
         order_by = select.find(exp.Order)
         if order_by:
-            order_clause = self._translate_order_by(order_by, tables)
+            order_clause = self._translate_order_by(order_by, tables, select_aliases)
             cypher_parts.append(order_clause)
 
         # Procesar LIMIT y OFFSET
@@ -440,6 +457,30 @@ class TranslationService:
             right = self._translate_expression(expr.right, tables)
             return f"{left} <= {right}"
 
+        elif isinstance(expr, exp.Mul):
+            left = self._translate_expression(expr.left, tables)
+            right = self._translate_expression(expr.right, tables)
+            return f"{left} * {right}"
+
+        elif isinstance(expr, exp.Add):
+            left = self._translate_expression(expr.left, tables)
+            right = self._translate_expression(expr.right, tables)
+            return f"{left} + {right}"
+
+        elif isinstance(expr, exp.Sub):
+            left = self._translate_expression(expr.left, tables)
+            right = self._translate_expression(expr.right, tables)
+            return f"{left} - {right}"
+
+        elif isinstance(expr, exp.Div):
+            left = self._translate_expression(expr.left, tables)
+            right = self._translate_expression(expr.right, tables)
+            return f"{left} / {right}"
+
+        elif isinstance(expr, exp.Neg):
+            inner = self._translate_expression(expr.this, tables)
+            return f"-{inner}"
+
         elif isinstance(expr, exp.Like):
             left = self._translate_expression(expr.this, tables)
             pattern = self._translate_expression(expr.expression, tables)
@@ -592,12 +633,19 @@ class TranslationService:
                 else:
                     columns.append("*")
             elif isinstance(expr, exp.Alias):
-                # Columna con alias
-                inner = self._translate_expression(expr.this, tables)
-                alias = expr.alias
-                columns.append(f"{inner} AS {alias}")
+                if has_group_by:
+                    # Con GROUP BY, usar solo el alias (ya definido en WITH)
+                    columns.append(expr.alias)
+                else:
+                    inner = self._translate_expression(expr.this, tables)
+                    alias = expr.alias
+                    columns.append(f"{inner} AS {alias}")
             else:
-                columns.append(self._translate_expression(expr, tables))
+                if has_group_by and isinstance(expr, exp.Column):
+                    # Con GROUP BY, usar nombre de columna directamente (definido en WITH)
+                    columns.append(expr.name)
+                else:
+                    columns.append(self._translate_expression(expr, tables))
 
         return f"RETURN {', '.join(columns)}"
 
@@ -606,6 +654,8 @@ class TranslationService:
     ) -> str:
         """
         Traduce GROUP BY a WITH en Cypher.
+        Incluye columnas de agrupación y funciones agregadas del SELECT.
+        Maneja HAVING como WHERE después de WITH.
 
         Args:
             group_by: AST del GROUP BY.
@@ -613,29 +663,79 @@ class TranslationService:
             tables: Lista de tablas.
 
         Returns:
-            Cláusula WITH para agrupación.
+            Cláusula WITH para agrupación (y WHERE de HAVING si existe).
         """
-        group_cols = []
+        with_parts = []
+        agg_alias_map = {}  # Mapea expresión agregada traducida -> alias
+
+        # Columnas de GROUP BY
         for expr in group_by.expressions:
-            group_cols.append(self._translate_expression(expr, tables))
+            translated = self._translate_expression(expr, tables)
+            if isinstance(expr, exp.Column):
+                alias = expr.name
+            else:
+                alias = translated.replace(".", "_")
+            with_parts.append(f"{translated} AS {alias}")
 
-        return f"WITH {', '.join(group_cols)}"
+        # Funciones agregadas del SELECT
+        for select_expr in select.expressions:
+            actual_expr = select_expr
+            alias_name = None
 
-    def _translate_order_by(self, order_by: exp.Order, tables: list) -> str:
+            if isinstance(select_expr, exp.Alias):
+                actual_expr = select_expr.this
+                alias_name = select_expr.alias
+
+            if isinstance(actual_expr, (exp.Count, exp.Sum, exp.Avg, exp.Min, exp.Max)):
+                func_str = self._translate_expression(actual_expr, tables)
+                if alias_name:
+                    with_parts.append(f"{func_str} AS {alias_name}")
+                    agg_alias_map[func_str] = alias_name
+                else:
+                    auto_alias = f"agg_{len(agg_alias_map)}"
+                    with_parts.append(f"{func_str} AS {auto_alias}")
+                    agg_alias_map[func_str] = auto_alias
+
+        result = f"WITH {', '.join(with_parts)}"
+
+        # HAVING → WHERE después de WITH
+        having = select.find(exp.Having)
+        if having:
+            having_str = self._translate_expression(having.this, tables)
+            # Reemplazar expresiones de agregación por sus aliases
+            for agg_expr, alias in agg_alias_map.items():
+                having_str = having_str.replace(agg_expr, alias)
+            result += f"\nWHERE {having_str}"
+
+        return result
+
+    def _translate_order_by(
+        self, order_by: exp.Order, tables: list, select_aliases: set = None
+    ) -> str:
         """
         Traduce ORDER BY a Cypher.
 
         Args:
             order_by: AST del ORDER BY.
             tables: Lista de tablas.
+            select_aliases: Aliases definidos en el SELECT (para no prefixar con tabla).
 
         Returns:
             Cláusula ORDER BY en Cypher.
         """
         order_parts = []
+        if select_aliases is None:
+            select_aliases = set()
 
         for ordered in order_by.expressions:
-            col = self._translate_expression(ordered.this, tables)
+            # Si la columna es un alias del SELECT, usarlo directamente
+            if (
+                isinstance(ordered.this, exp.Column)
+                and ordered.this.name in select_aliases
+            ):
+                col = ordered.this.name
+            else:
+                col = self._translate_expression(ordered.this, tables)
             direction = "DESC" if ordered.args.get("desc") else "ASC"
             order_parts.append(f"{col} {direction}")
 

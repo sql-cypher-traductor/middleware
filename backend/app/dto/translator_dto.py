@@ -3,6 +3,7 @@ DTOs para el módulo de traducción SQL a Cypher.
 """
 
 from pydantic import BaseModel, Field
+from typing import List
 from enum import Enum
 
 
@@ -44,6 +45,10 @@ class TranslationResponseDTO(BaseModel):
         ..., description="Tipo de sentencia SQL detectada"
     )
     translation_time: float = Field(..., description="Tiempo de traducción en segundos")
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="Advertencias sobre la consulta (ej: UPDATE/DELETE sin WHERE)",
+    )
 
 
 class TranslationErrorDTO(BaseModel):

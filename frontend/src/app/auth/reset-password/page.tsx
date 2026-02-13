@@ -103,7 +103,7 @@ function ResetPasswordContent() {
         <div className="reset-password-container">
           <div className="logo-container">
             <Image
-              src={resolvedTheme === "dark" ? "/logo1.png" : "/logo2.png"}
+              src={resolvedTheme === "dark" ? "/logo2.png" : "/logo1.png"}
               alt="SQL2Graph Logo"
               width={100}
               height={100}
@@ -126,7 +126,7 @@ function ResetPasswordContent() {
         </div>
         <style jsx>{`
           .reset-password-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%); padding: 2rem; }
-          .reset-password-container { width: 100%; max-width: 420px; background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 1rem; padding: 2.5rem; text-align: center; }
+          .reset-password-container { width: 100%; max-width: 420px; background-color: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 1rem; padding: 2.5rem; text-align: center; }
           .logo-container { display: flex; justify-content: center; margin-bottom: 1rem; }
           .title { font-size: var(--text-h2); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: 0.75rem; }
           .description { font-size: var(--text-body); color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5; }

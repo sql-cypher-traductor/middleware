@@ -17,7 +17,6 @@ import {
     Calendar,
 } from "lucide-react";
 import {
-    LineChart,
     Line,
     XAxis,
     YAxis,
@@ -262,7 +261,7 @@ export function Analytics() {
                                         paddingAngle={3}
                                         dataKey="count"
                                         nameKey="status"
-                                        label={({name, percent}) => `${((percent || 0) * 100).toFixed(0)}%`}
+                                        label={({percent}) => `${((percent || 0) * 100).toFixed(0)}%`}
                                         labelLine={false}
                                     >
                                         {pieChartData.map((entry, index) => (

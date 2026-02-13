@@ -48,47 +48,6 @@ class SQLValidator:
         "DELETE": ["FROM"],
     }
 
-    # Patrones de errores comunes específicos
-    COMMON_ERRORS = {
-        "SELECT": [
-            (
-                r"SELECT\s+.*\s+WHERE",
-                "SELECT sin FROM: Se requiere 'FROM tabla' antes de 'WHERE'",
-            ),
-            (
-                r"SELECT\s+.*\s+ORDER\s+BY(?!\s+.*FROM)",
-                "SELECT sin FROM: Se requiere 'FROM tabla' antes de 'ORDER BY'",
-            ),
-            (
-                r"HAVING(?!\s+.*GROUP\s+BY)",
-                "HAVING sin GROUP BY: HAVING requiere una cláusula GROUP BY previa",
-            ),
-        ],
-        "INSERT": [
-            (r"INSERT\s+INTO\s+\w+\s*\([^)]+\)\s*VALUES\s*\([^)]+\)", None),  # Correcto
-            (
-                r"INSERT\s+INTO\s+\w+\s+VALUES",
-                "INSERT sin columnas: Se recomienda especificar las columnas explícitamente",
-            ),
-        ],
-        "UPDATE": [
-            (
-                r"UPDATE\s+\w+\s+WHERE",
-                "UPDATE sin SET: Falta la cláusula 'SET columna = valor'",
-            ),
-        ],
-        "DELETE": [
-            (
-                r"DELETE\s+\w+\s+WHERE",
-                "DELETE sin FROM: Use 'DELETE FROM tabla WHERE...'",
-            ),
-            (
-                r"DELETE\s+FROM\s+WHERE",
-                "DELETE sin tabla: Especifique el nombre de la tabla después de 'DELETE FROM'",
-            ),
-        ],
-    }
-
     def validate(self, sql: str) -> Tuple[bool, Optional[SQLValidationError]]:
         """
         Valida una sentencia SQL y retorna errores descriptivos.
@@ -134,19 +93,18 @@ class SQLValidator:
         if keyword_error:
             return False, keyword_error
 
-        # 4. Validar patrones de errores comunes
-        pattern_error = self._check_common_patterns(sql_upper, statement_type)
-        if pattern_error:
-            return False, pattern_error
-
-        # 5. Intentar parsear con sqlglot para detectar errores de sintaxis
+        # 4. Intentar parsear con sqlglot para detectar errores de sintaxis
         parse_error = self._try_parse(sql)
         if parse_error:
             return False, parse_error
 
-        # 6. Validaciones semánticas post-parseo
+        # 5. Validaciones semánticas post-parseo
         try:
-            parsed = sqlglot.parse_one(sql)
+            # Intentar parseo estándar, con fallback a T-SQL
+            try:
+                parsed = sqlglot.parse_one(sql)
+            except ParseError:
+                parsed = sqlglot.parse_one(sql, read="tsql")
             semantic_error = self._validate_semantics(parsed, statement_type)
             if semantic_error:
                 return False, semantic_error
@@ -222,49 +180,37 @@ class SQLValidator:
 
         return None
 
-    def _check_common_patterns(
-        self, sql_upper: str, statement_type: str
-    ) -> Optional[SQLValidationError]:
-        """Verifica patrones de errores comunes según el tipo de sentencia."""
-
-        patterns = self.COMMON_ERRORS.get(statement_type, [])
-
-        for pattern, error_msg in patterns:
-            if error_msg and re.search(pattern, sql_upper, re.IGNORECASE | re.DOTALL):
-                # Extraer el tipo de error del mensaje
-                error_type = "SYNTAX_ERROR"
-                if "sin FROM" in error_msg:
-                    error_type = "MISSING_FROM"
-                elif "sin SET" in error_msg:
-                    error_type = "MISSING_SET"
-                elif "HAVING sin GROUP BY" in error_msg:
-                    error_type = "HAVING_WITHOUT_GROUP_BY"
-
-                return SQLValidationError(error_type=error_type, message=error_msg)
-
-        return None
-
     def _try_parse(self, sql: str) -> Optional[SQLValidationError]:
         """Intenta parsear el SQL y captura errores descriptivos."""
 
         try:
             sqlglot.parse_one(sql)
             return None
-        except ParseError as e:
-            error_msg = str(e)
-
-            # Analizar el mensaje de error para hacerlo más descriptivo
-            return self._interpret_parse_error(error_msg, sql)
+        except ParseError:
+            # Intentar con dialecto T-SQL para sintaxis como [Order Details]
+            try:
+                sqlglot.parse_one(sql, read="tsql")
+                return None
+            except ParseError as e:
+                error_msg = str(e)
+                # Analizar el mensaje de error para hacerlo más descriptivo
+                return self._interpret_parse_error(error_msg, sql)
 
     def _interpret_parse_error(self, error_msg: str, sql: str) -> SQLValidationError:
         """Interpreta errores de parseo y genera mensajes amigables."""
 
         error_lower = error_msg.lower()
 
+        # Limpiar el mensaje de tokens internos
+        clean_msg = re.sub(
+            r"<Token token_type: TokenType\.\w+, text: ([^>]+)>", r"'\1'", error_msg
+        )
+        clean_msg = re.sub(r"<Token token_type: TokenType[^>]*>", "", clean_msg).strip()
+
         # Errores de tokens esperados
         if "expected" in error_lower:
             # Extraer qué se esperaba
-            match = re.search(r"expected\s+(.+?)(?:\.|$)", error_msg, re.IGNORECASE)
+            match = re.search(r"expected\s+(.+?)(?:\.|$)", clean_msg, re.IGNORECASE)
             if match:
                 expected = match.group(1).strip()
                 return SQLValidationError(
@@ -436,37 +382,24 @@ class SQLValidator:
                 suggestion="Use 'INSERT INTO nombre_tabla' para especificar dónde insertar",
             )
 
-        # Verificar columnas vs valores
-        columns = list(insert.find_all(exp.Column))
+        # Verificar columnas vs valores usando Schema node
+        schema = insert.this
+        col_count = 0
+        if isinstance(schema, exp.Schema):
+            col_count = len(schema.expressions)
 
-        # Buscar los valores
-        values = None
-        for node in insert.walk():
-            if isinstance(node, exp.Values):
-                values = node
-                break
-            elif isinstance(node, exp.Tuple):
-                values = node
-                break
-
-        if columns and values:
-            # Contar valores en el primer tuple de VALUES
-            value_count = 0
-            if isinstance(values, exp.Values):
-                first_tuple = values.find(exp.Tuple)
+        if col_count > 0:
+            values_node = insert.find(exp.Values)
+            if values_node:
+                first_tuple = values_node.find(exp.Tuple)
                 if first_tuple:
                     value_count = len(list(first_tuple.expressions))
-            elif isinstance(values, exp.Tuple):
-                value_count = len(list(values.expressions))
-
-            col_count = len(columns)
-
-            if col_count != value_count and value_count > 0:
-                return SQLValidationError(
-                    error_type="COLUMN_VALUE_MISMATCH",
-                    message=f"El número de columnas ({col_count}) no coincide con el número de valores ({value_count})",
-                    suggestion=f"Asegúrese de tener exactamente {col_count} valores para las {col_count} columnas especificadas",
-                )
+                    if col_count != value_count:
+                        return SQLValidationError(
+                            error_type="COLUMN_VALUE_MISMATCH",
+                            message=f"El número de columnas ({col_count}) no coincide con el número de valores ({value_count})",
+                            suggestion=f"Asegúrese de tener exactamente {col_count} valores para las {col_count} columnas especificadas",
+                        )
 
         return None
 
@@ -490,15 +423,7 @@ class SQLValidator:
                     suggestion="Agregue 'SET columna = valor' para especificar qué actualizar",
                 )
 
-        # Advertencia si no hay WHERE (actualiza todo)
-        where_clause = update.find(exp.Where)
-        if not where_clause:
-            return SQLValidationError(
-                error_type="UPDATE_WITHOUT_WHERE",
-                message="⚠️ ADVERTENCIA: UPDATE sin WHERE actualizará TODAS las filas de la tabla",
-                suggestion="Agregue 'WHERE condición' para limitar las filas a actualizar, o confirme que desea actualizar todo",
-            )
-
+        # UPDATE sin WHERE es válido sintácticamente (advertencia manejada como warning)
         return None
 
     def _validate_delete_semantics(
@@ -518,15 +443,7 @@ class SQLValidator:
                 suggestion="Use 'DELETE FROM nombre_tabla' para especificar de dónde eliminar",
             )
 
-        # Advertencia si no hay WHERE
-        where_clause = delete.find(exp.Where)
-        if not where_clause:
-            return SQLValidationError(
-                error_type="DELETE_WITHOUT_WHERE",
-                message="⚠️ ADVERTENCIA: DELETE sin WHERE eliminará TODAS las filas de la tabla",
-                suggestion="Agregue 'WHERE condición' para limitar las filas a eliminar, o confirme que desea eliminar todo",
-            )
-
+        # DELETE sin WHERE es válido sintácticamente (advertencia manejada como warning)
         return None
 
 
@@ -545,3 +462,29 @@ def validate_sql(sql: str) -> Tuple[bool, Optional[SQLValidationError]]:
         Tupla (es_valido, error)
     """
     return sql_validator.validate(sql)
+
+
+def get_sql_warnings(sql: str) -> list:
+    """
+    Obtiene advertencias para SQL válido pero potencialmente peligroso.
+
+    Args:
+        sql: Consulta SQL a analizar.
+
+    Returns:
+        Lista de advertencias (strings).
+    """
+    warnings = []
+    sql_upper = sql.upper().strip()
+
+    # UPDATE sin WHERE
+    if sql_upper.startswith("UPDATE") and re.search(r"\bSET\b", sql_upper):
+        if not re.search(r"\bWHERE\b", sql_upper):
+            warnings.append("UPDATE sin WHERE actualizará TODAS las filas de la tabla")
+
+    # DELETE sin WHERE
+    if sql_upper.startswith("DELETE") and re.search(r"\bFROM\b", sql_upper):
+        if not re.search(r"\bWHERE\b", sql_upper):
+            warnings.append("DELETE sin WHERE eliminará TODAS las filas de la tabla")
+
+    return warnings
