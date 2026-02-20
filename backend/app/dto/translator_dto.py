@@ -14,6 +14,7 @@ class StatementType(str, Enum):
     INSERT = "INSERT"
     UPDATE = "UPDATE"
     DELETE = "DELETE"
+    BATCH = "BATCH"
     UNKNOWN = "UNKNOWN"
 
 

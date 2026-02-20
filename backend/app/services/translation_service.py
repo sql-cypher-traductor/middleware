@@ -62,15 +62,53 @@ class TranslationService:
     def __init__(self):
         pass
 
-    def translate(self, request: TranslationRequestDTO) -> TranslationResponseDTO:
+    def _split_sql_statements(self, sql: str) -> list:
         """
-        Traduce una consulta SQL a Cypher.
+        Divide texto SQL en sentencias individuales separadas por punto y coma.
 
         Args:
-            request: Solicitud con la consulta SQL.
+            sql: Texto SQL con una o más sentencias.
 
         Returns:
-            Respuesta con la consulta Cypher generada.
+            Lista de sentencias SQL individuales (sin punto y coma).
+        """
+        statements = []
+        for stmt in sql.split(";"):
+            stmt = stmt.strip()
+            if stmt:
+                statements.append(stmt)
+        return statements
+
+    def _singularize_table_name(self, name: str) -> str:
+        """
+        Singulariza un nombre de tabla para usarlo como etiqueta Cypher.
+        Maneja patrones comunes de plurales en español e inglés.
+
+        Ejemplos: Clientes -> Cliente, Pedidos -> Pedido,
+                  Productos -> Producto, Categorias -> Categoria
+
+        Args:
+            name: Nombre de la tabla (potencialmente en plural).
+
+        Returns:
+            Nombre singularizado para usar como label en Cypher.
+        """
+        if not name:
+            return name
+        if len(name) > 1 and name.endswith("s"):
+            return name[:-1]
+        return name
+
+    def translate(self, request: TranslationRequestDTO) -> TranslationResponseDTO:
+        """
+        Traduce una o varias consultas SQL a Cypher.
+        Soporta múltiples sentencias separadas por punto y coma.
+
+        Args:
+            request: Solicitud con la(s) consulta(s) SQL.
+
+        Returns:
+            Respuesta con la(s) consulta(s) Cypher generadas.
 
         Raises:
             HTTPException: Si hay error de sintaxis o sentencia no soportada.
@@ -79,72 +117,100 @@ class TranslationService:
 
         start_time = time.perf_counter()
 
-        # Validar SQL con el validador mejorado
-        sql_query = request.sql.strip()
-        is_valid, validation_error = validate_sql(sql_query)
+        sql_text = request.sql.strip()
 
-        if not is_valid and validation_error:
-            # Construir mensaje de error descriptivo
-            error_message = validation_error.message
-            if validation_error.suggestion:
-                error_message += f". Sugerencia: {validation_error.suggestion}"
+        # Dividir en sentencias individuales
+        statements = self._split_sql_statements(sql_text)
 
+        if not statements:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
-                    "error_type": validation_error.error_type,
-                    "message": validation_error.message,
-                    "suggestion": validation_error.suggestion,
-                    "position": validation_error.position,
+                    "error_type": "EMPTY_QUERY",
+                    "message": "La consulta SQL está vacía",
+                    "suggestion": "Ingrese una consulta SQL válida",
                 },
             )
 
-        try:
-            # Parsear SQL a AST usando sqlglot (con fallback a T-SQL)
+        cypher_results = []
+        statement_types = []
+        all_warnings = []
+
+        for stmt in statements:
+            # Validar cada sentencia individualmente
+            is_valid, validation_error = validate_sql(stmt)
+
+            if not is_valid and validation_error:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "error_type": validation_error.error_type,
+                        "message": validation_error.message,
+                        "suggestion": validation_error.suggestion,
+                        "position": validation_error.position,
+                    },
+                )
+
             try:
-                parsed = sqlglot.parse_one(sql_query)
-            except ParseError:
-                parsed = sqlglot.parse_one(sql_query, read="tsql")
-        except ParseError as e:
-            # Si llegamos aquí, el validador no detectó el error
-            # Intentar dar un mensaje más descriptivo
-            error_str = str(e)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "error_type": "PARSE_ERROR",
-                    "message": f"Error de sintaxis SQL: {error_str}",
-                    "suggestion": "Revise la sintaxis de la consulta SQL",
-                },
-            )
+                # Parsear SQL a AST usando sqlglot (con fallback a T-SQL)
+                try:
+                    parsed = sqlglot.parse_one(stmt)
+                except ParseError:
+                    parsed = sqlglot.parse_one(stmt, read="tsql")
+            except ParseError as e:
+                error_str = str(e)
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "error_type": "PARSE_ERROR",
+                        "message": f"Error de sintaxis SQL: {error_str}",
+                        "suggestion": "Revise la sintaxis de la consulta SQL",
+                    },
+                )
 
-        # Detectar tipo de sentencia y traducir
-        try:
-            statement_type, cypher_query = self._translate_statement(parsed)
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "error_type": "TRANSLATION_ERROR",
-                    "message": f"Error durante la traducción: {str(e)}",
-                    "suggestion": "Verifique que la estructura de la consulta sea válida",
-                },
-            )
+            # Detectar tipo de sentencia y traducir
+            try:
+                stmt_type, cypher = self._translate_statement(parsed)
+                cypher_results.append(cypher)
+                statement_types.append(stmt_type)
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "error_type": "TRANSLATION_ERROR",
+                        "message": f"Error durante la traducción: {str(e)}",
+                        "suggestion": "Verifique que la estructura de la consulta sea válida",
+                    },
+                )
+
+            # Obtener advertencias para cada sentencia
+            warnings = get_sql_warnings(stmt)
+            all_warnings.extend(warnings)
 
         end_time = time.perf_counter()
         translation_time = round(end_time - start_time, 6)
 
-        # Obtener advertencias para operaciones potencialmente peligrosas
-        warnings = get_sql_warnings(sql_query)
+        # Combinar resultados
+        if len(cypher_results) == 1:
+            combined_cypher = cypher_results[0]
+            final_type = statement_types[0]
+        else:
+            parts = []
+            for i, (cypher, stype) in enumerate(
+                zip(cypher_results, statement_types)
+            ):
+                parts.append(f"// Sentencia {i + 1}: {stype.value}\n{cypher}")
+            combined_cypher = "\n\n".join(parts)
+            final_type = StatementType.BATCH
 
         return TranslationResponseDTO(
-            sql=sql_query,
-            cypher=cypher_query,
-            statement_type=statement_type,
+            sql=sql_text,
+            cypher=combined_cypher,
+            statement_type=final_type,
             translation_time=translation_time,
-            warnings=warnings,
+            warnings=all_warnings,
         )
 
     def _validate_sql_basic(self, sql: str) -> None:
@@ -231,7 +297,8 @@ class TranslationService:
             # MATCH simple sin JOINS
             main_table = tables[0]
             alias = main_table.get("alias", main_table["name"].lower()[0])
-            match_clause = f"MATCH ({alias}:{main_table['name']})"
+            label = self._singularize_table_name(main_table["name"])
+            match_clause = f"MATCH ({alias}:{label})"
 
         cypher_parts.append(match_clause)
 
@@ -315,6 +382,8 @@ class TranslationService:
     ) -> str:
         """
         Construye la cláusula MATCH con relaciones para JOINS.
+        Analiza las condiciones ON para construir la topología correcta del grafo
+        en lugar de encadenar linealmente.
 
         Args:
             tables: Lista de tablas.
@@ -322,14 +391,23 @@ class TranslationService:
             select: AST del SELECT.
 
         Returns:
-            Cláusula MATCH con relaciones.
+            Cláusula MATCH con relaciones respetando la topología del grafo.
         """
         if not tables:
             return ""
 
         main_table = tables[0]
         main_alias = main_table.get("alias", main_table["name"].lower()[0])
-        match_parts = [f"({main_alias}:{main_table['name']})"]
+        main_label = self._singularize_table_name(main_table["name"])
+
+        # Construir mapeo alias -> info de tabla
+        alias_to_table = {}
+        for t in tables:
+            alias_to_table[t["alias"]] = t
+
+        # Analizar cada JOIN ON para construir lista de adyacencia
+        # adjacency[existing_alias] = [(join_alias, relation_name, join_table_label)]
+        adjacency: dict = {}
 
         for join in joins:
             join_table = join.find(exp.Table)
@@ -340,26 +418,91 @@ class TranslationService:
             join_alias = (
                 join_table.alias if join_table.alias else join_table_name.lower()[0]
             )
+            join_label = self._singularize_table_name(join_table_name)
 
-            # Intentar inferir el nombre de la relación desde la condición ON
+            # Determinar a qué alias existente se conecta este JOIN
+            existing_alias = main_alias  # fallback
+            on_eq = join.find(exp.EQ)
+            if on_eq:
+                left = on_eq.left
+                right = on_eq.right
+
+                left_alias = (
+                    left.table
+                    if isinstance(left, exp.Column) and left.table
+                    else ""
+                )
+                right_alias = (
+                    right.table
+                    if isinstance(right, exp.Column) and right.table
+                    else ""
+                )
+
+                if left_alias == join_alias:
+                    existing_alias = right_alias if right_alias else main_alias
+                elif right_alias == join_alias:
+                    existing_alias = left_alias if left_alias else main_alias
+                else:
+                    # Ningún lado coincide directamente, buscar alias conocido
+                    if left_alias in alias_to_table and left_alias != join_alias:
+                        existing_alias = left_alias
+                    elif right_alias in alias_to_table and right_alias != join_alias:
+                        existing_alias = right_alias
+
+            # Inferir nombre de relación desde la condición ON
             relation_name = self._infer_relation_name(
-                join, main_table["name"], join_table_name
+                join,
+                alias_to_table.get(existing_alias, {}).get("name", ""),
+                join_table_name,
             )
 
-            # Determinar dirección de la relación
-            # Por defecto asumimos que la tabla principal apunta a la tabla del JOIN
-            match_parts.append(f"-[:{relation_name}]->({join_alias}:{join_table_name})")
+            if existing_alias not in adjacency:
+                adjacency[existing_alias] = []
+            adjacency[existing_alias].append((join_alias, relation_name, join_label))
 
-            # Actualizar main_alias para encadenar JOINS
-            main_alias = join_alias
+        # Construir caminos a través del grafo usando DFS
+        paths: list = []
 
-        return "MATCH " + "".join(match_parts)
+        def dfs(current_alias: str, current_path: list) -> None:
+            children = adjacency.get(current_alias, [])
+            if not children:
+                if current_path:
+                    paths.append(current_path[:])
+                return
+            for child_alias, rel_name, child_label in children:
+                current_path.append((child_alias, rel_name, child_label))
+                dfs(child_alias, current_path)
+                current_path.pop()
+
+        dfs(main_alias, [])
+
+        # Si no se encontraron caminos, retornar MATCH simple
+        if not paths:
+            return f"MATCH ({main_alias}:{main_label})"
+
+        # Generar patrones MATCH separados por comas para ramificaciones
+        match_patterns = []
+        for i, path in enumerate(paths):
+            if i == 0:
+                # Primer camino: incluir label completo del nodo raíz
+                pattern = f"({main_alias}:{main_label})"
+            else:
+                # Caminos siguientes: solo alias del nodo raíz (ya definido)
+                pattern = f"({main_alias})"
+
+            for child_alias, rel_name, child_label in path:
+                pattern += f"-[:{rel_name}]->({child_alias}:{child_label})"
+
+            match_patterns.append(pattern)
+
+        return "MATCH " + ",\n      ".join(match_patterns)
 
     def _infer_relation_name(
         self, join: exp.Join, from_table: str, to_table: str
     ) -> str:
         """
         Intenta inferir el nombre de la relación desde la condición ON.
+        Soporta patrones de FK como ClienteID, Producto_ID, etc.
 
         Args:
             join: AST del JOIN.
@@ -376,13 +519,18 @@ class TranslationService:
             left = on_clause.left
             right = on_clause.right
 
-            # Buscar patrones comunes como "user_id", "customer_id", etc.
+            # Buscar patrones comunes como "ClienteID", "user_id", etc.
             for col in [left, right]:
                 if isinstance(col, exp.Column):
-                    col_name = col.name.upper()
-                    if col_name.endswith("_ID"):
-                        # Extraer el nombre base (ej: "user_id" -> "HAS_USER")
-                        base_name = col_name[:-3]  # Quitar "_ID"
+                    col_name = col.name
+                    col_upper = col_name.upper()
+                    if col_upper.endswith("_ID") and len(col_name) > 3:
+                        # Patrón: Cliente_ID -> HAS_CLIENTE
+                        base_name = col_name[:-3].upper()
+                        return f"HAS_{base_name}"
+                    elif col_upper.endswith("ID") and len(col_name) > 2:
+                        # Patrón: ClienteID -> HAS_CLIENTE
+                        base_name = col_name[:-2].upper()
                         return f"HAS_{base_name}"
 
         # Relación genérica si no podemos inferir
@@ -768,12 +916,13 @@ class TranslationService:
     def _translate_insert(self, insert: exp.Insert) -> str:
         """
         Traduce una sentencia INSERT a Cypher.
+        Detecta columnas FK (XxxID) para generar MATCH + CREATE con relaciones.
 
         Args:
             insert: AST del INSERT.
 
         Returns:
-            Consulta Cypher CREATE equivalente.
+            Consulta Cypher CREATE equivalente, con MATCH y relaciones si hay FKs.
         """
         # Obtener tabla - puede ser un Schema que contiene la tabla
         table_expr = insert.this
@@ -794,7 +943,9 @@ class TranslationService:
             table_name = str(table_expr).split()[0]  # Tomar solo el nombre
             columns = []
 
-        alias = table_name.lower()[0]
+        # Singularizar nombre de tabla para etiqueta Cypher
+        label = self._singularize_table_name(table_name)
+        alias = label.lower()[:3]
 
         # Extraer valores
         values = []
@@ -807,16 +958,89 @@ class TranslationService:
                 ]
                 break  # Solo primer set de valores
 
-        # Construir propiedades
-        if columns and values:
-            props = ", ".join([f"{col}: {val}" for col, val in zip(columns, values)])
-        elif values:
-            # Sin columnas especificadas, usar índices
-            props = ", ".join([f"prop{i}: {val}" for i, val in enumerate(values)])
-        else:
-            props = ""
+        # Detectar columnas FK y separar de las propiedades regulares
+        fk_pairs = []  # (ref_label, fk_col_name, fk_value)
+        non_fk_cols = []
+        non_fk_vals = []
 
-        return f"CREATE ({alias}:{table_name} {{{props}}})\nRETURN {alias}"
+        if columns and values:
+            for col, val in zip(columns, values):
+                col_upper = col.upper()
+                is_fk = False
+                ref_base = ""
+
+                if col_upper.endswith("_ID") and len(col) > 3:
+                    ref_base = col[:-3]
+                    is_fk = True
+                elif col_upper.endswith("ID") and len(col) > 2:
+                    ref_base = col[:-2]
+                    is_fk = True
+
+                if is_fk and ref_base:
+                    ref_label = self._singularize_table_name(ref_base)
+                    fk_pairs.append((ref_label, col, val))
+                else:
+                    non_fk_cols.append(col)
+                    non_fk_vals.append(val)
+        else:
+            non_fk_cols = columns
+            non_fk_vals = values
+
+        if fk_pairs:
+            # Generar MATCH + CREATE con relaciones
+            cypher_parts = []
+
+            # MATCH nodos referenciados
+            match_parts = []
+            ref_aliases = []
+            for ref_label, fk_col, fk_val in fk_pairs:
+                ref_alias = ref_label.lower()[:3]
+                # Asegurar aliases únicos
+                counter = 0
+                original_ref_alias = ref_alias
+                while ref_alias in ref_aliases or ref_alias == alias:
+                    counter += 1
+                    ref_alias = f"{original_ref_alias}{counter}"
+                ref_aliases.append(ref_alias)
+                match_parts.append(
+                    f"({ref_alias}:{ref_label} {{{fk_col}: {fk_val}}})"
+                )
+
+            cypher_parts.append(f"MATCH {', '.join(match_parts)}")
+
+            # CREATE nodo nuevo con propiedades no-FK
+            if non_fk_cols and non_fk_vals:
+                props = ", ".join(
+                    f"{col}: {val}"
+                    for col, val in zip(non_fk_cols, non_fk_vals)
+                )
+                cypher_parts.append(f"CREATE ({alias}:{label} {{{props}}})")
+            else:
+                cypher_parts.append(f"CREATE ({alias}:{label})")
+
+            # CREATE relaciones
+            for i, (ref_label, _fk_col, _fk_val) in enumerate(fk_pairs):
+                ref_alias = ref_aliases[i]
+                rel_name = f"HAS_{ref_label.upper()}"
+                cypher_parts.append(
+                    f"CREATE ({alias})-[:{rel_name}]->({ref_alias})"
+                )
+
+            return "\n".join(cypher_parts)
+        else:
+            # CREATE simple sin relaciones (comportamiento original)
+            if columns and values:
+                props = ", ".join(
+                    [f"{col}: {val}" for col, val in zip(columns, values)]
+                )
+            elif values:
+                props = ", ".join(
+                    [f"prop{i}: {val}" for i, val in enumerate(values)]
+                )
+            else:
+                props = ""
+
+            return f"CREATE ({alias}:{label} {{{props}}})\nRETURN {alias}"
 
     def _translate_update(self, update: exp.Update) -> str:
         """
@@ -837,10 +1061,11 @@ class TranslationService:
             table_name = str(table)
             alias = table_name.lower()[0]
 
+        label = self._singularize_table_name(table_name)
         tables = [{"name": table_name, "alias": alias}]
 
         # MATCH
-        cypher_parts = [f"MATCH ({alias}:{table_name})"]
+        cypher_parts = [f"MATCH ({alias}:{label})"]
 
         # WHERE
         where = update.find(exp.Where)
@@ -882,10 +1107,11 @@ class TranslationService:
             table_name = str(table)
             alias = table_name.lower()[0]
 
+        label = self._singularize_table_name(table_name)
         tables = [{"name": table_name, "alias": alias}]
 
         # MATCH
-        cypher_parts = [f"MATCH ({alias}:{table_name})"]
+        cypher_parts = [f"MATCH ({alias}:{label})"]
 
         # WHERE
         where = delete.find(exp.Where)
