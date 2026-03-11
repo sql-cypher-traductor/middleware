@@ -109,7 +109,6 @@ def delete_user(
     )
 
 
-
 @router.get(
     "/logs",
     response_model=LogListResponseDTO,
@@ -202,8 +201,6 @@ def get_usage_stats(
     """
     log_service = LogService(db)
     return log_service.get_usage_stats(days=days)
-
-
 
 
 @router.get(

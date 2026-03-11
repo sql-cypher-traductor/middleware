@@ -67,7 +67,6 @@ class SystemStatsDTO(BaseModel):
     logs_today: int
 
 
-
 class QueryCountByDayDTO(BaseModel):
     """Conteo de consultas por día."""
 
