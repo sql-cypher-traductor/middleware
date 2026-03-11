@@ -73,9 +73,6 @@ export interface LogStatsResponse {
   available_actions: string[];
 }
 
-// ==================== Tipos para Estadísticas de Uso ====================
-
-// Conteo de consultas por día
 export interface QueryCountByDay {
   date: string;
   total: number;
@@ -84,22 +81,17 @@ export interface QueryCountByDay {
   failed: number;
 }
 
-// Distribución por estado
 export interface QueryStatusDistribution {
   status: string;
   count: number;
   color: string;
 }
 
-// Estadísticas de uso del sistema
 export interface UsageStats {
-  // Usuarios
   total_users: number;
   active_users: number;
   users_logged_in_today: number;
   new_users_this_week: number;
-
-  // Consultas
   total_queries: number;
   queries_today: number;
   queries_this_week: number;
@@ -107,24 +99,18 @@ export interface UsageStats {
   executed_queries: number;
   failed_queries: number;
   success_rate: number;
-
-  // Tiempos promedio (en milisegundos)
   avg_translation_time_ms: number | null;
   avg_execution_time_ms: number | null;
-
-  // Conexiones
   total_connections: number;
   active_connections: number;
 }
 
-// Respuesta completa de estadísticas de uso
 export interface UsageStatsResponse {
   stats: UsageStats;
   queries_by_day: QueryCountByDay[];
   query_status_distribution: QueryStatusDistribution[];
 }
 
-// Filtros de logs
 export interface LogFilters {
   page?: number;
   page_size?: number;
@@ -136,7 +122,6 @@ export interface LogFilters {
   search?: string;
 }
 
-// Colores para niveles
 export const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
   INFO: "#3b82f6",
   WARNING: "#f59e0b",
@@ -144,7 +129,6 @@ export const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
   CRITICAL: "#dc2626",
 };
 
-// Colores de fondo para niveles
 export const LOG_LEVEL_BG_COLORS: Record<LogLevel, string> = {
   INFO: "rgba(59, 130, 246, 0.15)",
   WARNING: "rgba(245, 158, 11, 0.15)",

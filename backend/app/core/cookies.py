@@ -20,15 +20,15 @@ def set_auth_cookies(
     """
     Establece las cookies de autenticación en la respuesta.
 
-    - access_token: HttpOnly, Secure, SameSite (NO accesible desde JavaScript)
-    - csrf_token: NO HttpOnly (accesible desde JavaScript para enviar en headers)
+    - access_token: HttpOnly, Secure, SameSite
+    - csrf_token: NO HttpOnly
 
     Args:
-        response: Objeto Response de FastAPI.
+        response: Response donde se establecerán las cookies.
         access_token: Token JWT de acceso.
         csrf_token: Token CSRF para protección contra ataques.
     """
-    # Cookie del Access Token (HttpOnly - no accesible desde JS)
+    # Cookie del Access Token (HttpOnly)
     response.set_cookie(
         key=ACCESS_TOKEN_COOKIE,
         value=access_token,
@@ -36,12 +36,12 @@ def set_auth_cookies(
         expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/",
         domain=settings.COOKIE_DOMAIN,
-        secure=settings.COOKIE_SECURE,  # True en producción (HTTPS)
-        httponly=True,  # No accesible desde JavaScript
-        samesite=settings.COOKIE_SAMESITE,  # "lax" o "strict"
+        secure=settings.COOKIE_SECURE,
+        httponly=True,
+        samesite=settings.COOKIE_SAMESITE,
     )
 
-    # Cookie del CSRF Token (NO HttpOnly - debe ser leída por JavaScript)
+    # Cookie del CSRF Token
     response.set_cookie(
         key=CSRF_TOKEN_COOKIE,
         value=csrf_token,
@@ -50,17 +50,17 @@ def set_auth_cookies(
         path="/",
         domain=settings.COOKIE_DOMAIN,
         secure=settings.COOKIE_SECURE,
-        httponly=False,  # Accesible desde JavaScript
+        httponly=False,
         samesite=settings.COOKIE_SAMESITE,
     )
 
 
 def clear_auth_cookies(response: Response) -> None:
     """
-    Elimina las cookies de autenticación (logout).
+    Limpia las cookies de autenticación al salir del middleware.
 
     Args:
-        response: Objeto Response de FastAPI.
+        response: Response donde se eliminarán las cookies.
     """
     response.delete_cookie(
         key=ACCESS_TOKEN_COOKIE,

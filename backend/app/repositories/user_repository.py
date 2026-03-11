@@ -83,11 +83,11 @@ class UserRepository:
         Obtiene usuarios con paginación, búsqueda y filtro por rol.
 
         Args:
-            page: Número de página (1-indexed).
+            page: Número de página.
             page_size: Cantidad de usuarios por página.
             search: Término de búsqueda (busca en nombre, apellido y email).
             role: Filtrar por rol específico.
-            include_deleted: Si se incluyen usuarios eliminados (soft-deleted).
+            include_deleted: Si se incluyen usuarios eliminados.
 
         Returns:
             Tupla con la lista de usuarios y el total de registros.
@@ -126,7 +126,7 @@ class UserRepository:
 
     def soft_delete(self, user: User) -> User:
         """
-        Realiza una eliminación lógica (soft-delete) del usuario.
+        Realiza una eliminación segura del usuario.
 
         Args:
             user: Usuario a eliminar.
@@ -142,7 +142,7 @@ class UserRepository:
 
     def get_by_id_for_admin(self, user_id: UUID) -> User | None:
         """
-        Busca un usuario por su ID (para administración).
+        Busca un usuario por su ID.
         Incluye usuarios eliminados.
 
         Args:

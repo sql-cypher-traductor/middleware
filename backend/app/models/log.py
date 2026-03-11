@@ -13,11 +13,11 @@ class Log(Base):
         ForeignKey("users.user_id", ondelete="SET NULL"),
         nullable=True,
     )
-    level = Column(String, nullable=False, index=True)  # INFO, ERROR, WARNING
-    action = Column(String, nullable=False, index=True)  # LOGIN, TRANSLATION_REQ
-    resource = Column(String, nullable=True)  # Perfil, Conexión, etc.
+    level = Column(String, nullable=False, index=True)
+    action = Column(String, nullable=False, index=True)
+    resource = Column(String, nullable=True)
     message = Column(Text, nullable=False)
-    details = Column(JSONB, nullable=True)  # Datos extra de la acción
+    details = Column(JSONB, nullable=True)
     ip_address = Column(String, nullable=True)
     user_agent = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)

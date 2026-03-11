@@ -86,9 +86,9 @@ class ConnectionRepository:
 
         Args:
             user_id: ID del usuario.
-            page: Número de página (1-indexed).
+            page: Número de página.
             page_size: Cantidad de registros por página.
-            engine_type: Filtrar por tipo de motor (opcional).
+            engine_type: Filtrar por tipo de motor.
 
         Returns:
             Tupla con la lista de conexiones y el total de registros.

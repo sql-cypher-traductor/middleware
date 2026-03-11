@@ -14,15 +14,15 @@ from .config import settings
 class EncryptionService:
     """
     Servicio para cifrar y descifrar credenciales sensibles.
-    Utiliza una clave derivada del SECRET_KEY de la aplicación.
     """
 
     def __init__(self):
         self._fernet = self._create_fernet()
 
-    def _create_fernet(self) -> Fernet:
+    @staticmethod
+    def _create_fernet() -> Fernet:
         """
-        Crea una instancia de Fernet usando una clave derivada del SECRET_KEY.
+        Crea una instancia de Fernet para el cifrado de la contraseña del usuario.
 
         Returns:
             Instancia de Fernet configurada.
@@ -34,8 +34,7 @@ class EncryptionService:
                 "SECRET_KEY no está configurada. Es necesaria para el cifrado."
             )
 
-        # Usar PBKDF2 para derivar una clave de 32 bytes a partir del SECRET_KEY
-        # El salt es fijo para poder descifrar los datos posteriormente
+        # Usar PBKDF2 para derivar una clave de 32 bytes
         salt = b"middleware_connections_salt_v1"
 
         kdf = PBKDF2HMAC(
@@ -55,7 +54,7 @@ class EncryptionService:
         Cifra un texto plano.
 
         Args:
-            plaintext: Texto a cifrar (ej: contraseña de base de datos).
+            plaintext: Texto a cifrar.
 
         Returns:
             Texto cifrado en formato base64.
@@ -86,7 +85,7 @@ class EncryptionService:
         return decrypted_bytes.decode("utf-8")
 
 
-# Instancia singleton del servicio de cifrado
+# Instancia del servicio de cifrado
 encryption_service = EncryptionService()
 
 

@@ -84,8 +84,6 @@ export const adminService = {
     return api.delete<{ message: string }>(`${ADMIN_ENDPOINTS.USERS}/${userId}`);
   },
 
-  // ==================== LOGS ====================
-
   /**
    * Obtiene logs del sistema con paginación y filtros
    */
@@ -105,8 +103,6 @@ export const adminService = {
     return api.get<LogListResponse>(url);
   },
 
-  // ==================== ESTADÍSTICAS ====================
-
   /**
    * Obtiene estadísticas de logs del sistema
    */
@@ -121,7 +117,6 @@ export const adminService = {
     return api.get<UsageStatsResponse>(`${ADMIN_ENDPOINTS.USAGE_STATS}?days=${days}`);
   },
 
-  // ==================== EXPORTACIÓN ====================
 
   /**
    * Obtiene URL para exportar logs a CSV
@@ -155,5 +150,4 @@ export const adminService = {
 };
 
 export default adminService;
-
 

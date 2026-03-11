@@ -67,8 +67,6 @@ class SystemStatsDTO(BaseModel):
     logs_today: int
 
 
-# ==================== DTOs para Estadísticas de Uso ====================
-
 
 class QueryCountByDayDTO(BaseModel):
     """Conteo de consultas por día."""
@@ -89,7 +87,7 @@ class QueryStatusDistributionDTO(BaseModel):
 
 
 class UsageStatsDTO(BaseModel):
-    """Estadísticas de uso del sistema (sin basarse en logs)."""
+    """Estadísticas de uso del sistema."""
 
     # Usuarios
     total_users: int
@@ -106,7 +104,7 @@ class UsageStatsDTO(BaseModel):
     failed_queries: int
     success_rate: float
 
-    # Tiempos promedio (en milisegundos)
+    # Tiempos promedio
     avg_translation_time_ms: Optional[float]
     avg_execution_time_ms: Optional[float]
 

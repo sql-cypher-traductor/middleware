@@ -25,9 +25,9 @@ class QueryHistory(Base):
         UUID(as_uuid=True),
         ForeignKey("connections.connection_id", ondelete="SET NULL"),
         nullable=True,
-    )  # Puede ser nulo si solo se traduce sin ejecutar contra una DB específica
+    )
     sql_query = Column(Text, nullable=False)
-    cypher_query = Column(Text, nullable=True)  # Nulo si falla la traducción
+    cypher_query = Column(Text, nullable=True)
     query_status = Column(
         Enum(QueryStatus), nullable=False, default=QueryStatus.PENDING
     )

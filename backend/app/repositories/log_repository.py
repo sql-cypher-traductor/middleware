@@ -62,9 +62,9 @@ class LogRepository:
         Obtiene logs con paginación y filtros.
 
         Args:
-            page: Número de página (1-indexed).
+            page: Número de página.
             page_size: Cantidad de registros por página.
-            level: Filtrar por nivel (INFO, WARNING, ERROR, CRITICAL).
+            level: Filtrar por nivel.
             action: Filtrar por tipo de acción.
             user_id: Filtrar por usuario.
             start_date: Fecha de inicio del rango.
@@ -102,7 +102,7 @@ class LogRepository:
 
         total = query.count()
 
-        # Ordenar por fecha descendente (más recientes primero)
+        # Ordenar por fecha desde la más reciente
         query = query.order_by(desc(Log.created_at))
 
         # Aplicar paginación
@@ -161,7 +161,7 @@ class LogRepository:
             limit: Número máximo de acciones a retornar.
 
         Returns:
-            Lista de tuplas (acción, conteo) ordenadas por conteo descendente.
+            Acciones ordenadas por conteo descendente.
         """
         query = self.db.query(Log.action, func.count(Log.id))
 
@@ -183,13 +183,13 @@ class LogRepository:
         days: int = 30,
     ) -> list[tuple[datetime, int]]:
         """
-        Obtiene el conteo de logs por día para los últimos N días.
+        Obtiene el conteo de logs por día para los últimos días.
 
         Args:
             days: Número de días hacia atrás.
 
         Returns:
-            Lista de tuplas (fecha, conteo).
+            Conteo de logs por día.
         """
         start_date = datetime.utcnow() - timedelta(days=days)
 

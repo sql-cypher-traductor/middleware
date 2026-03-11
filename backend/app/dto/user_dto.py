@@ -114,7 +114,7 @@ class UserResponseDTO(UserBaseDTO):
 
 class AuthResultDTO(BaseModel):
     """
-    Esquema interno para el resultado de autenticación (usado por el servicio).
+    Esquema interno para el resultado de autenticación.
 
     Attributes:
         access_token (str): Token JWT de acceso.
@@ -169,7 +169,6 @@ class AdminUserUpdateDTO(BaseModel):
 class AdminUserResponseDTO(BaseModel):
     """
     Esquema de respuesta de usuario para administración.
-    Incluye información adicional como deleted_at.
     """
 
     model_config = ConfigDict(from_attributes=True)

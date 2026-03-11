@@ -62,7 +62,7 @@ class ConnectionService:
             database_name=connection_data.database_name,
             username_db=connection_data.username_db,
             password_db=encrypted_password,
-            is_active=False,  # Inicia desactivada
+            is_active=False,
         )
 
         created_connection = self.connection_repository.create(connection)

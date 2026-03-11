@@ -59,7 +59,7 @@ class TranslationErrorDTO(BaseModel):
     Attributes:
         sql: Consulta SQL original.
         error: Mensaje de error.
-        error_type: Tipo de error (syntax, unsupported, etc.).
+        error_type: Tipo de error.
     """
 
     sql: str = Field(..., description="Consulta SQL original")

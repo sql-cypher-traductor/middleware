@@ -18,7 +18,7 @@ class AuditLogger:
 
     # Acciones predefinidas
     class Actions:
-        # Auth
+        # Autenticación
         LOGIN = "LOGIN"
         LOGIN_FAILED = "LOGIN_FAILED"
         LOGOUT = "LOGOUT"
@@ -27,34 +27,34 @@ class AuditLogger:
         PASSWORD_RESET_REQUEST = "PASSWORD_RESET_REQUEST"
         PASSWORD_RESET = "PASSWORD_RESET"
 
-        # User management
+        # Perfiles de usuarios
         USER_UPDATE = "USER_UPDATE"
         USER_DELETE = "USER_DELETE"
         PROFILE_UPDATE = "PROFILE_UPDATE"
 
-        # Connections
+        # Configuración de conexiones
         CONNECTION_CREATE = "CONNECTION_CREATE"
         CONNECTION_UPDATE = "CONNECTION_UPDATE"
         CONNECTION_DELETE = "CONNECTION_DELETE"
         CONNECTION_TEST = "CONNECTION_TEST"
 
-        # Translation & Execution
+        # Traducción y ejecución de consultas
         SQL_TRANSLATION = "SQL_TRANSLATION"
         SQL_TRANSLATION_FAILED = "SQL_TRANSLATION_FAILED"
         CYPHER_EXECUTION = "CYPHER_EXECUTION"
         CYPHER_EXECUTION_FAILED = "CYPHER_EXECUTION_FAILED"
 
-        # Admin
+        # Administradores
         ADMIN_USER_UPDATE = "ADMIN_USER_UPDATE"
         ADMIN_USER_DELETE = "ADMIN_USER_DELETE"
         ADMIN_VIEW_LOGS = "ADMIN_VIEW_LOGS"
         ADMIN_EXPORT_LOGS = "ADMIN_EXPORT_LOGS"
 
-        # System
+        # Errores del sistema
         SYSTEM_ERROR = "SYSTEM_ERROR"
         SCHEMA_FETCH = "SCHEMA_FETCH"
 
-    # Niveles de log
+    # Criticidad de la acción del log
     class Levels:
         INFO = "INFO"
         WARNING = "WARNING"
@@ -163,7 +163,7 @@ class AuditLogger:
         details: Optional[dict] = None,
         request: Optional[Request] = None,
     ) -> Log:
-        """Atajo para log de nivel INFO."""
+        """Logs Informativos."""
         if request:
             return AuditLogger.log_from_request(
                 db,
@@ -189,7 +189,7 @@ class AuditLogger:
         details: Optional[dict] = None,
         request: Optional[Request] = None,
     ) -> Log:
-        """Atajo para log de nivel WARNING."""
+        """Logs de Advertencia."""
         if request:
             return AuditLogger.log_from_request(
                 db,
@@ -215,7 +215,7 @@ class AuditLogger:
         details: Optional[dict] = None,
         request: Optional[Request] = None,
     ) -> Log:
-        """Atajo para log de nivel ERROR."""
+        """Logs de Error."""
         if request:
             return AuditLogger.log_from_request(
                 db,
@@ -241,7 +241,7 @@ class AuditLogger:
         details: Optional[dict] = None,
         request: Optional[Request] = None,
     ) -> Log:
-        """Atajo para log de nivel CRITICAL."""
+        """Logs Críticos."""
         if request:
             return AuditLogger.log_from_request(
                 db,
@@ -295,5 +295,5 @@ class AuditLogger:
         return masked
 
 
-# Alias para uso más fácil
+# Instancia global del logger
 audit = AuditLogger()

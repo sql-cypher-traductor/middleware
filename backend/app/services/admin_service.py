@@ -138,7 +138,7 @@ class AdminService:
 
     def delete_user(self, user_id: UUID, admin_user: User) -> dict:
         """
-        Elimina un usuario (soft-delete).
+        Elimina un usuario.
 
         Args:
             user_id: ID del usuario a eliminar.
@@ -173,7 +173,7 @@ class AdminService:
                 detail="No puedes eliminarte a ti mismo",
             )
 
-        # Realizar soft-delete
+        # Realizar eliminación segura
         self.user_repository.soft_delete(user)
 
         return {"message": f"Usuario {user.email} eliminado correctamente"}

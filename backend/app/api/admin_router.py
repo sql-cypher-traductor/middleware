@@ -32,9 +32,6 @@ from ..services.log_service import LogService
 router = APIRouter(prefix="/api/admin", tags=["Administración"])
 
 
-# ==================== GESTIÓN DE USUARIOS ====================
-
-
 @router.get(
     "/users",
     response_model=PaginatedUsersResponseDTO,
@@ -112,8 +109,6 @@ def delete_user(
     )
 
 
-# ==================== LOGS DEL SISTEMA ====================
-
 
 @router.get(
     "/logs",
@@ -160,9 +155,6 @@ def get_logs(
         end_date=end_date,
         search=search,
     )
-
-
-# ==================== ESTADÍSTICAS ====================
 
 
 @router.get(
@@ -212,7 +204,6 @@ def get_usage_stats(
     return log_service.get_usage_stats(days=days)
 
 
-# ==================== EXPORTACIÓN ====================
 
 
 @router.get(

@@ -105,7 +105,7 @@ class QueryHistoryRepository:
 
         total = query.count()
 
-        # Ordenar por fecha de creación descendente (más recientes primero)
+        # Ordenar por fecha de creación desde la más reciente
         query = query.order_by(desc(QueryHistory.created_at))
 
         # Aplicar paginación
@@ -119,7 +119,7 @@ class QueryHistoryRepository:
         Actualiza un registro de consulta existente.
 
         Args:
-            query_history: Instancia del modelo QueryHistory con los cambios.
+            query_history: Instancia historial con las consultas realizadas.
 
         Returns:
             Registro actualizado.
@@ -163,7 +163,7 @@ class QueryHistoryRepository:
             limit: Número máximo de consultas a retornar.
 
         Returns:
-            Lista de consultas ordenadas por fecha descendente.
+            Lista de consultas ordenadas por fecha desde la más reciente.
         """
         return (
             self.db.query(QueryHistory)
@@ -181,7 +181,7 @@ class QueryHistoryRepository:
             user_id: ID del usuario.
 
         Returns:
-            Diccionario con estadísticas (total, por estado, etc.).
+            Estadísticas del historial de consultas.
         """
         total = (
             self.db.query(QueryHistory).filter(QueryHistory.user_id == user_id).count()

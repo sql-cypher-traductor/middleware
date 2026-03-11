@@ -198,9 +198,7 @@ class TranslationService:
             final_type = statement_types[0]
         else:
             parts = []
-            for i, (cypher, stype) in enumerate(
-                zip(cypher_results, statement_types)
-            ):
+            for i, (cypher, stype) in enumerate(zip(cypher_results, statement_types)):
                 parts.append(f"// Sentencia {i + 1}: {stype.value}\n{cypher}")
             combined_cypher = "\n\n".join(parts)
             final_type = StatementType.BATCH
@@ -428,14 +426,10 @@ class TranslationService:
                 right = on_eq.right
 
                 left_alias = (
-                    left.table
-                    if isinstance(left, exp.Column) and left.table
-                    else ""
+                    left.table if isinstance(left, exp.Column) and left.table else ""
                 )
                 right_alias = (
-                    right.table
-                    if isinstance(right, exp.Column) and right.table
-                    else ""
+                    right.table if isinstance(right, exp.Column) and right.table else ""
                 )
 
                 if left_alias == join_alias:
@@ -1002,17 +996,14 @@ class TranslationService:
                     counter += 1
                     ref_alias = f"{original_ref_alias}{counter}"
                 ref_aliases.append(ref_alias)
-                match_parts.append(
-                    f"({ref_alias}:{ref_label} {{{fk_col}: {fk_val}}})"
-                )
+                match_parts.append(f"({ref_alias}:{ref_label} {{{fk_col}: {fk_val}}})")
 
             cypher_parts.append(f"MATCH {', '.join(match_parts)}")
 
             # CREATE nodo nuevo con propiedades no-FK
             if non_fk_cols and non_fk_vals:
                 props = ", ".join(
-                    f"{col}: {val}"
-                    for col, val in zip(non_fk_cols, non_fk_vals)
+                    f"{col}: {val}" for col, val in zip(non_fk_cols, non_fk_vals)
                 )
                 cypher_parts.append(f"CREATE ({alias}:{label} {{{props}}})")
             else:
@@ -1022,9 +1013,7 @@ class TranslationService:
             for i, (ref_label, _fk_col, _fk_val) in enumerate(fk_pairs):
                 ref_alias = ref_aliases[i]
                 rel_name = f"HAS_{ref_label.upper()}"
-                cypher_parts.append(
-                    f"CREATE ({alias})-[:{rel_name}]->({ref_alias})"
-                )
+                cypher_parts.append(f"CREATE ({alias})-[:{rel_name}]->({ref_alias})")
 
             return "\n".join(cypher_parts)
         else:
@@ -1034,9 +1023,7 @@ class TranslationService:
                     [f"{col}: {val}" for col, val in zip(columns, values)]
                 )
             elif values:
-                props = ", ".join(
-                    [f"prop{i}: {val}" for i, val in enumerate(values)]
-                )
+                props = ", ".join([f"prop{i}: {val}" for i, val in enumerate(values)])
             else:
                 props = ""
 

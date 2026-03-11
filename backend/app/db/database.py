@@ -33,7 +33,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-# Dependency para FastAPI
+# Instancia de la sesión a la base de datos interna del sistema
 def get_db():
     db = SessionLocal()
     try:

@@ -99,10 +99,10 @@ def generate_csrf_token() -> str:
 
 def create_csrf_token(session_id: str) -> str:
     """
-    Crea un token CSRF vinculado a una sesión (double-submit pattern).
+    Crea un token CSRF vinculado a una sesión.
 
     Args:
-        session_id: ID de la sesión del usuario (user_id del JWT).
+        session_id: ID de la sesión del usuario.
 
     Returns:
         Token CSRF firmado.
@@ -127,7 +127,7 @@ def verify_csrf_token(csrf_token: str, session_id: str) -> bool:
         session_id: ID de la sesión del usuario.
 
     Returns:
-        True si el token es válido, False en caso contrario.
+        True si el token es válido.
     """
     try:
         payload = jwt.decode(
@@ -141,7 +141,6 @@ def verify_csrf_token(csrf_token: str, session_id: str) -> bool:
 def create_password_reset_token(email: str) -> str:
     expires_delta = timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
     expire = datetime.now(timezone.utc) + expires_delta
-    # El 'scope' evita que este token se use para iniciar sesión
     to_encode = {"exp": expire, "sub": email, "scope": "password_reset"}
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
@@ -151,7 +150,7 @@ def create_password_reset_token(email: str) -> str:
 
 def verify_password_reset_token(token: str) -> str | None:
     """
-    Decodifica el token y extrae el email si es válido y tiene el scope correcto.
+    Decodifica el token y extrae el email si es válido.
     Retorna el email o None si falló la validación.
     """
     try:

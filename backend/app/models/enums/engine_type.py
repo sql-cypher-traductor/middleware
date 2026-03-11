@@ -7,7 +7,7 @@ class EngineType(str, Enum):
 
     @property
     def display_name(self) -> str:
-        """Retorna el nombre legible para mostrar en UI."""
+        """Retorna el tipo de motor de las bases de datos externas."""
         if self == EngineType.SQL_SERVER:
             return "SQL Server"
         return "Neo4j"

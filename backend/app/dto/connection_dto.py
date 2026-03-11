@@ -44,7 +44,7 @@ class ConnectionCreateDTO(ConnectionBaseDTO):
     Incluye la contraseña que será cifrada antes de guardar.
 
     Attributes:
-        password_db: Contraseña para autenticación (será cifrada).
+        password_db: Contraseña cifrada.
     """
 
     password_db: str = Field(..., min_length=1)
@@ -61,7 +61,7 @@ class ConnectionUpdateDTO(BaseModel):
         port: Puerto de conexión.
         database_name: Nombre de la base de datos.
         username_db: Usuario para autenticación.
-        password_db: Nueva contraseña (opcional, si se proporciona será cifrada).
+        password_db: Nueva contraseña (Opcional).
     """
 
     connection_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -75,7 +75,6 @@ class ConnectionUpdateDTO(BaseModel):
 class ConnectionResponseDTO(BaseModel):
     """
     Esquema de respuesta para una conexión.
-    No incluye la contraseña por seguridad.
 
     Attributes:
         connection_id: ID único de la conexión.
@@ -108,7 +107,7 @@ class ConnectionResponseDTO(BaseModel):
 
 class ConnectionTestDTO(BaseModel):
     """
-    Esquema para probar una conexión sin guardarla (conexión volátil).
+    Esquema para probar una conexión.
 
     Attributes:
         engine_type: Tipo de motor de base de datos.
@@ -165,7 +164,7 @@ class TableSchemaDTO(BaseModel):
 
     Attributes:
         table_name: Nombre de la tabla.
-        table_schema: Esquema de la tabla (ej: dbo).
+        table_schema: Esquema de la tabla.
         columns: Lista de columnas de la tabla.
     """
 
