@@ -354,7 +354,6 @@ class LogService:
         week_start = today_start - timedelta(days=7)
         start_date = datetime.utcnow() - timedelta(days=days)
 
-        # ==================== Estadísticas de Usuarios ====================
         total_users = (
             self.db.query(func.count(User.user_id))
             .filter(User.deleted_at.is_(None))
@@ -369,7 +368,6 @@ class LogService:
             or 0
         )
 
-        # Usuarios que iniciaron sesión hoy (basado en last_login)
         users_logged_in_today = (
             self.db.query(func.count(User.user_id))
             .filter(and_(User.deleted_at.is_(None), User.last_login >= today_start))
@@ -377,7 +375,6 @@ class LogService:
             or 0
         )
 
-        # Usuarios nuevos esta semana
         new_users_this_week = (
             self.db.query(func.count(User.user_id))
             .filter(and_(User.deleted_at.is_(None), User.created_at >= week_start))
@@ -385,7 +382,6 @@ class LogService:
             or 0
         )
 
-        # ==================== Estadísticas de Consultas ====================
         total_queries = self.db.query(func.count(QueryHistory.query_id)).scalar() or 0
 
         queries_today = (
@@ -426,7 +422,6 @@ class LogService:
         successful = translated_queries + executed_queries
         success_rate = (successful / total_queries * 100) if total_queries > 0 else 0
 
-        # Tiempos promedio
         avg_translation = (
             self.db.query(func.avg(QueryHistory.translation_time))
             .filter(QueryHistory.translation_time.isnot(None))
@@ -439,7 +434,6 @@ class LogService:
             .scalar()
         )
 
-        # ==================== Estadísticas de Conexiones ====================
         total_connections = (
             self.db.query(func.count(Connection.connection_id)).scalar() or 0
         )
@@ -451,7 +445,6 @@ class LogService:
             or 0
         )
 
-        # ==================== Consultas por día ====================
         queries_by_day_raw = (
             self.db.query(
                 func.date(QueryHistory.created_at).label("date"),
@@ -488,12 +481,11 @@ class LogService:
             for row in queries_by_day_raw
         ]
 
-        # ==================== Distribución por estado ====================
         status_colors = {
-            "Traducida": "#3b82f6",  # Azul
-            "Ejecutada": "#22c55e",  # Verde
-            "Fallida": "#ef4444",  # Rojo
-            "Pendiente": "#f59e0b",  # Amarillo
+            "Traducida": "#3b82f6",
+            "Ejecutada": "#22c55e",
+            "Fallida": "#ef4444",
+            "Pendiente": "#f59e0b",
         }
 
         query_status_distribution = [

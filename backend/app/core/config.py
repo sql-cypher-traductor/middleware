@@ -24,7 +24,7 @@ class Settings:
     COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")  # "lax" o "strict"
     COOKIE_DOMAIN: str | None = os.getenv("COOKIE_DOMAIN", None)
 
-    # Frontend URL (para CORS)
+    # Configuración de URL del frontend para CORS
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     # Entorno

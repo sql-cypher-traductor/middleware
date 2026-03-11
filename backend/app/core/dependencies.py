@@ -1,5 +1,5 @@
 """
-Dependencias de autenticación y protección CSRF para FastAPI.
+Dependencias de autenticación y protección CSRF.
 """
 
 from typing import Annotated
@@ -14,7 +14,7 @@ from ..repositories.user_repository import UserRepository
 from ..models.user import User
 from ..models.enums.user_role import UserRole
 
-# Header donde el frontend envía el token CSRF
+# Header donde se envía el token CSRF
 CSRF_HEADER_NAME = "X-CSRF-Token"
 
 
@@ -87,7 +87,6 @@ async def get_current_user_from_cookie(
 async def verify_csrf(request: Request) -> None:
     """
     Verifica el token CSRF para operaciones mutables (POST, PUT, PATCH, DELETE).
-    Implementa el patrón double-submit cookie.
 
     Args:
         request: Objeto Request de FastAPI.
@@ -178,7 +177,7 @@ async def get_current_user_with_csrf(
     return await get_current_user_from_cookie(request, db)
 
 
-# Dependencia combinada: autenticación + protección CSRF
+# Dependencia para endpoints que requieren autenticación y protección CSRF
 CurrentUserWithCSRF = Annotated[User, Depends(get_current_user_with_csrf)]
 
 
@@ -211,7 +210,7 @@ async def check_admin_role_with_csrf(
 ) -> User:
     """
     Verifica que el usuario sea administrador y valida el token CSRF.
-    Usar para operaciones mutables de admin (POST, PUT, PATCH, DELETE).
+    Usar para operaciones mutables de administrador (POST, PUT, PATCH, DELETE).
 
     Args:
         request: Objeto Request de FastAPI.
@@ -239,8 +238,8 @@ async def check_admin_role_with_csrf(
     return user
 
 
-# Dependencia para endpoints de admin (solo lectura)
+# Dependencia para endpoints de admin en acciones de obtención de datos
 CurrentAdmin = Annotated[User, Depends(check_admin_role)]
 
-# Dependencia para endpoints de admin con protección CSRF (operaciones mutables)
+# Dependencia para endpoints de admin con protección CSRF en operaciones de modificación de datos
 CurrentAdminWithCSRF = Annotated[User, Depends(check_admin_role_with_csrf)]

@@ -19,7 +19,6 @@ app = FastAPI(
 )
 
 # Configuración del CORS
-# En desarrollo usamos localhost, en producción usar el dominio real
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -29,12 +28,12 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,  # Importante para cookies
+    allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=[
         "Content-Type",
         "Authorization",
-        "X-CSRF-Token",  # Header para el token CSRF
+        "X-CSRF-Token",
         "Accept",
         "Origin",
         "X-Requested-With",
@@ -54,7 +53,7 @@ app.include_router(execution_router)
 @app.get("/")
 def health_check():
     return {
-        "status": "ok",
+        "status": "OK",
         "message": "Middleware operativo",
         "service": "API Traductor SQL a Cypher",
     }

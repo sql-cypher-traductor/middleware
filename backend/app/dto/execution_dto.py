@@ -16,8 +16,8 @@ class ExecutionRequestDTO(BaseModel):
 
     Attributes:
         cypher_query: Consulta Cypher a ejecutar.
-        connection_id: ID de la conexión Neo4j a usar (opcional, usa la activa si no se especifica).
-        sql_query: Consulta SQL original (opcional, para registro).
+        connection_id: ID de la conexión Neo4j a usar (Opcional).
+        sql_query: Consulta SQL original (Opcional).
     """
 
     cypher_query: str = Field(
@@ -86,11 +86,11 @@ class GraphDataDTO(BaseModel):
 
 class TabularDataDTO(BaseModel):
     """
-    Datos tabulares para visualización en tabla.
+    Datos para visualización en formato tabular.
 
     Attributes:
         columns: Nombres de las columnas.
-        rows: Filas de datos (cada fila es un diccionario columna->valor).
+        rows: Filas de datos.
     """
 
     columns: list[str] = Field(
@@ -135,7 +135,7 @@ class ExecutionResponseDTO(BaseModel):
     Attributes:
         query_id: ID del registro de historial de la consulta.
         cypher_query: Consulta Cypher ejecutada.
-        sql_query: Consulta SQL original (si fue proporcionada).
+        sql_query: Consulta SQL original.
         status: Estado de la ejecución.
         graph_data: Datos del grafo para visualización.
         tabular_data: Datos tabulares para visualización en tabla.
@@ -189,7 +189,7 @@ class QueryHistoryResponseDTO(BaseModel):
         error_message: Mensaje de error (si aplica).
         translation_time: Tiempo de traducción.
         execution_time: Tiempo de ejecución.
-        result_details: Detalles del resultado (estadísticas).
+        result_details: Detalles del resultado.
         created_at: Fecha de creación.
     """
 
@@ -211,7 +211,7 @@ class QueryHistoryResponseDTO(BaseModel):
 
 class QueryHistoryListResponseDTO(BaseModel):
     """
-    Esquema de respuesta para listar historial con paginación.
+    Esquema de respuesta para listar historial.
 
     Attributes:
         queries: Lista de consultas.

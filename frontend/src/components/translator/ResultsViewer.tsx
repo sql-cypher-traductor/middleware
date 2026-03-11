@@ -415,9 +415,10 @@ function TableView({ data }: { data: TabularData | null }) {
   const columns = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
     if (!data?.columns) return [];
     return data.columns.map((col) => ({
-      accessorKey: col,
+      id: col,
+      accessorFn: (row: Record<string, unknown>) => row[col],
       header: col,
-      cell: ({ getValue }) => {
+      cell: ({ getValue }: { getValue: () => unknown }) => {
         const value = getValue();
         if (value === null || value === undefined) {
           return <span className="null-value">NULL</span>;
